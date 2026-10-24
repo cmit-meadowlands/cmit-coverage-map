@@ -81,6 +81,8 @@ function createApp(L) {
     office: `<svg ${SV}><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-5h6v5M8 8h2M14 8h2M8 12h2M14 12h2"/></svg>`,
     cloud: `<svg ${SV}><path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.3 1.5A3.3 3.3 0 0 0 7 18z"/></svg>`,
     team: `<svg ${SV}><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.8.4 5 2.8 5 5.8"/></svg>`,
+    pause: `<svg ${SV}><path d="M9 5v14M15 5v14"/></svg>`,
+    play: `<svg ${SV}><path d="M7 4l13 8-13 8z"/></svg>`,
     shield: `<svg ${SV}><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>`
   };
 
@@ -186,7 +188,7 @@ function createApp(L) {
       box([.26, .18, .004], [0, .87, -.012], 'screen', { r: [-18, 0, 0], e: 0 })],
     deskphone: () => [box([.24, .07, .2], [0, .785, 0], 'body', { r: [-8, 0, 0] }), box([.11, .006, .07], [.04, .823, -.02], 'screen', { e: 0 }),
       box([.06, .05, .21], [-.085, .83, 0], 'face')],
-    person: () => [{ g: 'cap', a: [.17, .34], p: [0, .9, 0], m: 'body' }, { g: 'sph', a: [.13], p: [0, 1.36, 0], m: 'face' }],
+    person: () => [{ g: 'cap', a: [.17, .34], p: [0, .9, 0], m: 'body', e: 0 }, { g: 'sph', a: [.13], p: [0, 1.36, 0], m: 'face', e: 0 }],
     mfp: () => [box([.9, .95, .7], [0, .475, 0]), box([.86, .07, .66], [0, .985, 0], 'face'), box([.55, .04, .32], [0, .66, .36], 'face', { e: 0 }),
       box([.32, .03, .14], [.22, 1.04, .27], 'screen', { r: [-25, 0, 0], e: 0 }), box([.8, .02, .02], [0, .3, .355], 'face', { e: 0 }),
       box([.8, .02, .02], [0, .15, .355], 'face', { e: 0 })],
@@ -404,7 +406,7 @@ function createApp(L) {
         const mesh = new T.InstancedMesh(G, mats[p.m], inst.length);
         inst.forEach((im, i) => { _m.multiplyMatrices(im, lm); mesh.setMatrixAt(i, _m); if (p.e !== 0) pushEdges(lines, G, _m); });
         mesh.computeBoundingSphere();
-        mesh.userData.obj = def.id; mesh.userData.item = it;
+        mesh.userData.obj = def.id; mesh.userData.item = it; mesh.userData.lm = lm;
         rig.add(mesh); pickables.push(mesh); meshes.push(mesh);
       }
     }
@@ -430,7 +432,8 @@ function createApp(L) {
         o.box.union(b);
       }
     }
-    for (const arr of byItem.values()) for (const b of arr) { const c = b.getCenter(new V3()); c.y = b.max.y; o.anchors.push(c); }
+    o.iboxes = [];
+    for (const arr of byItem.values()) for (const b of arr) { const c = b.getCenter(new V3()); c.y = b.max.y; o.anchors.push(c); o.iboxes.push(b); }
     o.h = o.box.max.y - o.box.min.y;
     o.base = o.rig.position.clone();
   }
@@ -842,46 +845,95 @@ function createApp(L) {
   const shardMat = new T.MeshBasicMaterial({ color: hdr(C.red, 2.4), toneMapped: false, transparent: true });
   const shards = Array.from({ length: 16 }, () => { const m = new T.Mesh(new T.TetrahedronGeometry(.09), shardMat); m.visible = false; scene.add(m); m.userData.v = new V3(); return m; });
   let threat = null, threatT = 1.5, threatI = 0, shieldT = -1, shardT = -1, socPulse = 0;
-  function launchThreat() {
-    const v = MAP.threats[threatI % MAP.threats.length];
-    const O = MAP.dataView.origins, A = new V3(...O[threatI % O.length]);
+  /* Threats are always stopped OUTSIDE what they target: at the office's outer
+     envelope, or just short of a cloud tile. Nothing red ever reaches the business. */
+  const PERIM = new T.Box3(new V3(-13, -1, -9), new V3(13, 4.6, 9));
+  function stopT(curve, box) {
+    const N = 240;
+    for (let i = 0; i <= N; i++) if (box.containsPoint(curve.getPointAt(i / N, _v))) return Math.max(0, (i - 3) / N);
+    return .97;
+  }
+  const blockedEl = document.createElement('div');
+  blockedEl.className = 'lbl blocked';
+  blockedEl.innerHTML = '<div class="top"><span class="pill">Blocked</span><i class="leader"></i></div>';
+  const blockedTag = new L.CSS2DObject(blockedEl); blockedTag.visible = false; scene.add(blockedTag);
+  const zapMat = tubeMat(hdr(BB, 2), 1, 0, 1);
+  let zap = null, zapT = -1;
+  function launchThreat(v0, opts = {}) {
+    const v = v0 || MAP.threats[threatI % MAP.threats.length];
+    const O = MAP.dataView.origins, A = new V3(...O[(v.origin ?? threatI) % O.length]);
     threatI++;
     const tgt = objects.get(v.target);
     if (!tgt) return;
     const B = tgt.anchors[0].clone().add(new V3(0, .2, 0));
-    if (reduced) { impact(A, B, v); return; }
-    const M = A.clone().lerp(B, .5); M.y += 6;
-    threat = { curve: new T.CatmullRomCurve3([A, M, B]), t: 0, A, B, v };
-    threat.len = threat.curve.getLength();
+    const M = A.clone().lerp(B, .5); M.y = Math.max(A.y, B.y) + 7;
+    const curve = new T.CatmullRomCurve3([A, M, B]);
+    const box = tgt.zone.group === 'office' ? PERIM : tgt.box.clone().expandByScalar(1.1);
+    const blocked = opts.blocked !== false;
+    const stop = blocked ? stopT(curve, box) : 1;
+    const P = curve.getPointAt(stop), from = curve.getPointAt(Math.max(0, stop - .05));
+    if (reduced) { (blocked ? impact : breach)(P, from, v, tgt); if (opts.onDone) opts.onDone(); return; }
+    threat = { curve, t: 0, stop, P, from, v, tgt, blocked, onDone: opts.onDone, len: curve.getLength() };
     threatGroup.visible = true;
   }
-  function impact(A, B, v) {
-    const dir = A.clone().sub(B).normalize();
-    shield.position.copy(B).addScaledVector(dir, .7);
-    shield.lookAt(A);
-    shield.scale.setScalar(1); shieldT = 0; shield.visible = true;
+  function impact(P, from, v, tgt) {
+    shield.position.copy(P);
+    shield.lookAt(from);
+    shield.scale.setScalar(1.6); shieldT = 0; shield.visible = true;
     if (!reduced) {
       shardT = 0;
-      for (const s of shards) { s.position.copy(shield.position); s.userData.v.randomDirection().multiplyScalar(2 + Math.random() * 3).addScaledVector(dir, 2); s.visible = true; }
+      const back = from.clone().sub(P).normalize();
+      for (const s of shards) { s.position.copy(P); s.userData.v.randomDirection().multiplyScalar(2 + Math.random() * 3).addScaledVector(back, 3); s.visible = true; }
     }
+    blockedTag.position.copy(P).y += .4; blockedTag.visible = true; blockedEl.style.opacity = 1;
+    if (socObj) {
+      if (zap) { zap.geometry.dispose(); scene.remove(zap); }
+      zap = new T.Mesh(new T.TubeGeometry(arc(socObj.anchors[0], P, .6), 48, .06, 6), zapMat);
+      scene.add(zap); zapT = 0; zapMat.uniforms.uOpacity.value = 1;
+    }
+    if (tgt) tgt.pulse = 1;
     socPulse = 1;
+    toast(v.text);
+  }
+  /* An unblocked hit. Only ever used in the optional "without CMIT" replay. */
+  function breach(P, from, v, tgt) {
+    if (!reduced) {
+      shardT = 0;
+      for (const s of shards) { s.position.copy(P); s.userData.v.randomDirection().multiplyScalar(1.5 + Math.random() * 2.5); s.visible = true; }
+    }
+    ring(P, 0, 'red'); ring(P, .25, 'red');
+    if (tgt) { tgt.pulse = 1; setAlert(tgt, 1); }
     toast(v.text);
   }
   function updateThreats(dt) {
     threatT -= dt;
-    if (threatT <= 0) { threatT = MAP.dataView.threatEvery; launchThreat(); }
+    if (threatT <= 0) { threatT = MAP.dataView.threatEvery; if (!live.running && recap.hidden && !threat) launchThreat(); }
     if (threat) {
       threat.t += dt * 10 / threat.len;
-      if (threat.t >= 1) { threatGroup.visible = false; impact(threat.A, threat.B, threat.v); threat = null; }
+      if (threat.t >= threat.stop) {
+        const th = threat; threat = null; threatGroup.visible = false;
+        (th.blocked ? impact : breach)(th.P, th.from, th.v, th.tgt);
+        if (th.onDone) th.onDone();
+      }
       else tparts.forEach((m, i) => threat.curve.getPointAt(Math.max(0, threat.t - i * .012), m.position));
     }
   }
   function updateFx(dt) {
+    if (zapT >= 0) {
+      zapT += dt;
+      const s = zapT / .8;
+      if (s >= 1) { zapT = -1; if (zap) { zap.geometry.dispose(); scene.remove(zap); zap = null; } }
+      else zapMat.uniforms.uOpacity.value = 1 - s;
+    }
+    if (blockedTag.visible) {
+      const s = shieldT < 0 ? 1 : shieldT / (reduced ? 1.6 : 1.4);
+      if (shieldT < 0) blockedTag.visible = false; else blockedEl.style.opacity = Math.min(1, 2 * (1 - s));
+    }
     if (shieldT >= 0) {
       shieldT += dt;
-      const dur = reduced ? 1.6 : .9, s = shieldT / dur;
+      const dur = reduced ? 1.6 : 1.4, s = shieldT / dur;
       if (s >= 1) { shield.visible = false; shieldT = -1; }
-      else { if (!reduced) shield.scale.setScalar(.5 + s * .9); shieldMat.opacity = (1 - s) * .55; shieldEdgeMat.opacity = 1 - s; }
+      else { if (!reduced) shield.scale.setScalar(.9 + Math.min(1, s * 3) * 1.1); shieldMat.opacity = (1 - s) * .5; shieldEdgeMat.opacity = 1 - s * s; }
     }
     if (shardT >= 0) {
       shardT += dt;
@@ -891,14 +943,349 @@ function createApp(L) {
     }
   }
 
-  function toggleData(force) {
+  /* ---------- Live View: "A day at your office" ---------- */
+  const LV = MAP.liveView;
+  const hm = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const DAY0 = hm(LV.dayStart);
+  const EVENTS = LV.events.map(e => ({ ...e, m: (hm(e.at) - DAY0 + 1440) % 1440 })).sort((a, b) => a.m - b.m);
+  const OBJ = id => objects.get(id);
+  const PATCH_N = [...objects.values()].filter(o => o.zone.group === 'office' && !['staff', 'rack'].includes(o.id)).reduce((n, o) => n + o.anchors.length, 0);
+  const live = { running: false, paused: false, mode: 'protected', t: 0, i: 0, busy: 0, active: null, stats: {},
+    cages: [], tags: [], extras: [], timers: [], pend: [], camHold: 0, downAt: null, bob: null, walk: null, menuWasOpen: true };
+  const exposed = () => live.mode === 'exposed';
+  const anchorOf = (id, i = 0) => { const o = OBJ(id); return o ? o.anchors[Math.min(i, o.anchors.length - 1)].clone() : new V3(); };
+  const boxOf = list => {
+    const b = new T.Box3();
+    for (const s of list) {
+      const [id, i] = String(s).split('#'); const o = OBJ(id);
+      if (o) b.union(i != null && o.iboxes[+i] ? o.iboxes[+i] : o.box);
+    }
+    return b;
+  };
+  const after = (sec, fn) => live.timers.push({ d: sec, fn });
+  const bump = (k, v = 1) => { live.stats[k] = Math.round(((live.stats[k] || 0) + v) * 10) / 10; renderStats(); };
+  const lines = e => (exposed() ? e.exposed : e.text).replace('{n}', PATCH_N);
+
+  /* scene helpers */
+  function setAlert(o, v) {
+    if (!o) return;
+    o.alert = v;
+    o.mats.screen.color.copy(v ? C.red : BB).multiplyScalar(v ? .6 : .5);
+  }
+  function cage(id, i, bad) {
+    const o = OBJ(id); if (!o) return;
+    const b = (o.iboxes[i] || o.box).clone().expandByScalar(.12);
+    const s = b.getSize(new V3());
+    const m = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(s.x, s.y, s.z)),
+      new T.LineBasicMaterial({ color: hdr(bad ? C.red : BB, 2.6), toneMapped: false, transparent: true }));
+    b.getCenter(m.position); scene.add(m); live.cages.push(m);
+  }
+  function tag(pos, text, dur = 2.8, bad = false) {
+    const el = document.createElement('div');
+    el.className = 'lbl blocked' + (bad ? ' bad' : '');
+    el.innerHTML = `<div class="top"><span class="pill">${esc(text)}</span><i class="leader"></i></div>`;
+    const o = new L.CSS2DObject(el); o.position.copy(pos); o.position.y += .3; scene.add(o);
+    live.tags.push({ o, el, life: dur, max: dur });
+  }
+  function burst(A, B, color, n = 10, speed = 7, gap = .1) {
+    if (reduced) return;
+    const curve = arc(A, B);
+    const l = { curve, len: curve.getLength(), pcol: hdr(C[color], color === 'red' ? 3 : FLOWK[color] || 2), dim: false };
+    for (let k = 0; k < n; k++) live.pend.push({ l, d: k * gap, sp: speed, s: 1.15 });
+  }
+  const ringGeo = new T.TorusGeometry(.55, .03, 6, 36);
+  const rings = [];
+  function ring(pos, delay = 0, color = 'bright-blue') {
+    if (reduced) return;
+    let r = rings.find(r => !r.on);
+    if (!r) {
+      if (rings.length > 90) return;
+      const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({ toneMapped: false, transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
+      m.rotation.x = Math.PI / 2; m.visible = false; scene.add(m); r = { m }; rings.push(r);
+    }
+    r.on = true; r.t = -delay; r.m.position.copy(pos); r.m.material.color.copy(C[color]).multiplyScalar(2.2);
+  }
+  function beamLine(A, B, color, op = .8) {
+    const mat = tubeMat(hdr(C[color], 1.2), op, reduced ? 0 : 4, 30);
+    const m = new T.Mesh(new T.TubeGeometry(arc(A, B), 48, .04, 6), mat);
+    scene.add(m); live.extras.push(m); return m;
+  }
+  const staff = OBJ('staff');
+  const homeOf = i => { const a = staff.def.at[i]; return new V3(a[0], a[1], a[2]); };
+  function setInst(o, i, pos, sc = 1) {
+    _m2.makeScale(sc, sc, sc).setPosition(pos);
+    for (const mesh of o.meshes) { _m.multiplyMatrices(_m2, mesh.userData.lm); mesh.setMatrixAt(i, _m); mesh.instanceMatrix.needsUpdate = true; }
+  }
+  const staffShow = on => { if (staff) staff.group.visible = on; };
+  function direct(list, k = .9) {
+    if (!live.running || state.sel || performance.now() < live.camHold) return;
+    flyTo(viewForBox(boxOf(list), 10, k), 1.1);
+  }
+
+  /* event handlers: each plays both versions of the story */
+  const HANDLERS = {
+    open() { staffShow(true); },
+    close(e) {
+      staffShow(false);
+      if (live.bob) live.bob = null;
+      if (exposed() && live.downAt != null) bump('offline', Math.round((e.m - live.downAt) / 6) / 10);
+    },
+    helpdesk(e) {
+      const who = `staff#${e.staff}`, pc = `workstations#${e.device}`;
+      direct([who, pc, 'remote'], .8);
+      live.bob = { i: e.staff, home: homeOf(e.staff) };
+      tag(anchorOf('staff', e.staff), e.ask, 3);
+      if (!exposed()) {
+        after(1.4, () => burst(anchorOf('remote'), anchorOf('workstations', e.device), 'orange', 14, 8, .08));
+        after(3.4, () => { tag(anchorOf('workstations', e.device), 'Fixed remotely', 2.6); live.bob = null; setInst(staff, e.staff, homeOf(e.staff)); bump('fixed'); OBJ('remote').pulse = 1; });
+      } else {
+        after(3.2, () => tag(anchorOf('staff', e.staff), 'Still waiting on IT', 4, true));
+      }
+    },
+    threat(e) {
+      direct([e.target], .55);
+      launchThreat({ target: e.target, origin: e.origin, text: lines(e) }, {
+        blocked: !exposed(),
+        onDone: () => {
+          if (!exposed()) { bump('blocked'); return; }
+          bump('breaches');
+          const B = anchorOf(e.target);
+          if (e.victim != null) { burst(B, anchorOf('workstations', e.victim), 'red', 8); after(.9, () => cage('workstations', e.victim, true)); }
+          if (e.spread) { burst(B, anchorOf(e.spread), 'red', 8); after(.9, () => setAlert(OBJ(e.spread), 1)); }
+          after(1, () => tag(B, e.hit || 'Breached', 99, true));
+        }
+      });
+    },
+    ransomware(e) {
+      direct(['firewall', 'workstations', 'server'], .75);
+      launchThreat({ target: e.target, origin: e.origin, text: lines(e) }, {
+        blocked: !exposed(),
+        onDone: () => {
+          if (!exposed()) { bump('blocked'); return; }
+          bump('breaches');
+          live.downAt = live.t;
+          const ws = OBJ('workstations');
+          burst(anchorOf('firewall'), anchorOf('workstations', e.victim), 'red', 10);
+          after(.8, () => { cage('workstations', e.victim, true); setAlert(ws, 1); });
+          const order = ws.anchors.map((_, i) => i).filter(i => i !== e.victim);
+          order.forEach((i, k) => after(1.2 + k * .3, () => { burst(anchorOf('workstations', e.victim), anchorOf('workstations', i), 'red', 4, 9); cage('workstations', i, true); }));
+          ['server', 'nas', 'backup'].forEach((id, k) => after(3.2 + k * .45, () => { burst(anchorOf('switch'), anchorOf(id), 'red', 6, 9); setAlert(OBJ(id), 1); cage(id, 0, true); }));
+          after(4.8, () => tag(new V3(0, 3.6, -3), 'Office offline', 99, true));
+        }
+      });
+    },
+    restore() {
+      direct(['nas', 'cloudbackup'], .7);
+      tag(anchorOf('nas'), 'Folder deleted', 2.2, true);
+      if (!exposed()) {
+        after(1.2, () => burst(anchorOf('cloudbackup'), anchorOf('nas'), 'bright-blue', 16, 9, .06));
+        after(3, () => { tag(anchorOf('nas'), 'Restored', 2.6); OBJ('nas').pulse = 1; bump('fixed'); });
+      } else {
+        after(2.4, () => tag(anchorOf('nas'), 'No backup to restore', 4, true));
+      }
+    },
+    offboard(e) {
+      const i = e.staff, start = homeOf(i);
+      direct([`staff#${i}`, 'badge', 'identity', 'email'], .7);
+      const P = start.clone().add(new V3(0, 1.4, 0));
+      const ends = ['identity', 'email', 'badge'].map(id => anchorOf(id));
+      const bm = ends.map(B => beamLine(P, B, exposed() ? 'red' : 'paper', .7));
+      tag(P, 'Last day', 2.2);
+      const path = new T.CatmullRomCurve3([start, new V3(start.x, 0, -.6), new V3(6.2, 0, -.6), new V3(6.2, 0, 8.3), new V3(6.2, 0, 11.5)]);
+      after(1.2, () => { live.walk = reduced ? null : { i, path, s: 0, d: 3.4 }; if (reduced) setInst(staff, i, start, 0); });
+      if (!exposed()) {
+        after(2.2, () => {
+          bm.forEach(m => { m.userData.fade = 1; });
+          ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
+          tag(anchorOf('badge'), 'Access removed', 3);
+          bump('fixed');
+        });
+      } else {
+        after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
+      }
+    },
+    backup() {
+      direct(['server', 'backup', 'cloudbackup'], .7);
+      if (!exposed()) {
+        burst(anchorOf('server'), anchorOf('backup'), 'paper', 8);
+        burst(anchorOf('nas'), anchorOf('backup'), 'paper', 6);
+        after(1.2, () => burst(anchorOf('backup'), anchorOf('cloudbackup'), 'paper', 12, 8, .07));
+        after(3, () => { tag(anchorOf('cloudbackup'), 'Backup verified', 2.6); bump('backups'); });
+      } else {
+        after(1, () => tag(anchorOf('backup'), "Backup didn't run", 3.4, true));
+      }
+    },
+    patch() {
+      if (!state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.1);
+      if (!exposed()) {
+        const src = anchorOf('remote');
+        burst(src, anchorOf('firewall'), 'bright-blue', 10, 9, .06);
+        for (const o of objects.values()) {
+          if (o.zone.group !== 'office' || o.id === 'staff' || o.id === 'rack') continue;
+          o.anchors.forEach(a => ring(a, .6 + a.distanceTo(src) / 14));
+          after(1 + o.anchors[0].distanceTo(src) / 14, () => { o.pulse = 1; });
+        }
+        after(3.2, () => { tag(new V3(0, 4, 0), `${PATCH_N} devices updated`, 2.8); bump('updates', PATCH_N); });
+      } else {
+        after(1, () => { tag(new V3(0, 4, 0), `${PATCH_N} devices need updates`, 3.4, true); bump('unpatched', PATCH_N); });
+      }
+    }
+  };
+
+  /* HUD + recap */
+  const hud = $('#hud'), recap = $('#recap');
+  const fmt = m => { const t = (DAY0 + m) % 1440, h = Math.floor(t / 60), mm = Math.floor(t % 60); return `${(h % 12) || 12}:${String(mm).padStart(2, '0')}<small>${h < 12 ? 'AM' : 'PM'}</small>`; };
+  let lastClock = '';
+  function renderStats() {
+    const set = LV.recap[live.mode].stats;
+    $('#hud-stats').innerHTML = set.map(([k, label]) => `<div><b>${live.stats[k] || 0}</b><span>${esc(label)}</span></div>`).join('');
+  }
+  function renderHud() {
+    const c = fmt(live.t);
+    if (c !== lastClock) { $('#hud-clock').innerHTML = c; lastClock = c; }
+    $('#hud-bar').style.width = (100 * live.t / 1440).toFixed(2) + '%';
+  }
+  function showRecap() {
+    const R = LV.recap[live.mode];
+    $('#recap-pre').textContent = R.preheader;
+    $('#recap-h').textContent = R.title;
+    $('#recap-body').textContent = R.body;
+    $('#recap-stats').innerHTML = R.stats.map(([k, label]) => `<div><b>${live.stats[k] || 0}</b><span>${esc(label)}</span></div>`).join('');
+    $('#recap-alt').textContent = R.alt;
+    $('#recap-note').textContent = LV.note;
+    recap.hidden = false; appEl.classList.add('recap-on');
+    $('#recap-cta').focus({ preventScroll: true });
+  }
+
+  function clearWorld() {
+    live.timers.length = 0; live.pend.length = 0;
+    for (const m of live.cages) { m.geometry.dispose(); scene.remove(m); }
+    for (const m of live.extras) { m.geometry.dispose(); scene.remove(m); }
+    for (const t of live.tags) scene.remove(t.o);
+    live.cages.length = live.extras.length = live.tags.length = 0;
+    for (const r of rings) { r.on = false; r.m.visible = false; }
+    for (const o of objects.values()) setAlert(o, 0);
+    if (staff) { staff.def.at.forEach((_, i) => setInst(staff, i, homeOf(i))); staffShow(true); }
+    live.bob = live.walk = null; live.downAt = null;
+    threat = null; threatGroup.visible = false; packets.length = 0;
+  }
+  function liveStart(mode = 'protected') {
+    clearWorld();
+    Object.assign(live, { running: true, paused: false, mode, t: 0, i: 0, busy: 0, active: null, stats: {} });
+    staffShow(false);
+    recap.hidden = true; hud.hidden = false; appEl.classList.add('live-on'); appEl.classList.remove('recap-on');
+    $('#hud-mode').textContent = mode === 'exposed' ? 'Without CMIT' : 'With CMIT';
+    hud.classList.toggle('exposed', mode === 'exposed');
+    $('#hud-pause').setAttribute('aria-label', 'Pause');
+    $('#hud-pause').innerHTML = ICON.pause;
+    renderStats(); renderHud();
+    if (!isPhone() && !menu.classList.contains('collapsed')) { live.menuWasOpen = true; $('#menu-collapse').click(); }
+    if (state.sel) closePanel(true);
+    state.zone = null; syncMenu(); applyDims();
+    flyTo(overviewView());
+  }
+  function liveEnd() {
+    live.running = false;
+    showRecap();
+  }
+  function liveStop() {
+    live.running = false;
+    clearWorld();
+    hud.hidden = true; recap.hidden = true; appEl.classList.remove('live-on', 'recap-on');
+    if (live.menuWasOpen && menu.classList.contains('collapsed') && !isPhone()) $('#menu-collapse').click();
+    live.menuWasOpen = false;
+  }
+  function liveNext() {
+    if (!live.running || live.busy > 0) return;
+    const e = EVENTS[live.i];
+    live.t = e ? e.m : 1440;
+  }
+  function livePause(force) {
+    if (!live.running) return;
+    live.paused = typeof force === 'boolean' ? force : !live.paused;
+    $('#hud-pause').setAttribute('aria-label', live.paused ? 'Resume' : 'Pause');
+    $('#hud-pause').innerHTML = live.paused ? ICON.play : ICON.pause;
+  }
+
+  function dayLight(m) {
+    const h = ((DAY0 + m) % 1440) / 60;
+    if (h >= 7 && h < 18) return 1;
+    if (h >= 18 && h < 19.5) return 1 - (h - 18) / 1.5 * .55;
+    if (h >= 5.5 && h < 7) return .45 + (h - 5.5) / 1.5 * .55;
+    return .45;
+  }
+
+  function liveUpdate(dt) {
+    /* timers and staged packets keep playing even between events */
+    for (let i = live.timers.length - 1; i >= 0; i--) {
+      const tm = live.timers[i]; tm.d -= dt;
+      if (tm.d <= 0) { live.timers.splice(i, 1); tm.fn(); }
+    }
+    for (let i = live.pend.length - 1; i >= 0; i--) {
+      const q = live.pend[i]; q.d -= dt;
+      if (q.d <= 0) { live.pend.splice(i, 1); if (packets.length < PMAX) packets.push({ l: q.l, t: 0, dir: 1, sp: q.sp, s: q.s }); }
+    }
+    for (let i = live.tags.length - 1; i >= 0; i--) {
+      const t = live.tags[i]; t.life -= dt;
+      if (t.life <= 0) { scene.remove(t.o); live.tags.splice(i, 1); }
+      else if (t.life < .4) t.el.style.opacity = t.life / .4;
+    }
+    for (const r of rings) {
+      if (!r.on) continue;
+      r.t += dt; if (r.t < 0) continue;
+      const s = r.t / .9;
+      if (s >= 1) { r.on = false; r.m.visible = false; continue; }
+      r.m.visible = true; r.m.scale.setScalar(.3 + s * 1.8); r.m.material.opacity = 1 - s;
+    }
+    for (const m of live.extras) if (m.userData.fade) {
+      m.userData.fade = Math.max(0, m.userData.fade - dt * .8);
+      m.material.uniforms.uOpacity.value = .7 * m.userData.fade;
+      if (!m.userData.fade) m.visible = false;
+    }
+    if (live.bob && staff && !reduced) {
+      const p = live.bob.home.clone(); p.y += Math.abs(Math.sin(time * 6)) * .14; setInst(staff, live.bob.i, p);
+    }
+    if (live.walk && staff) {
+      const w = live.walk; w.s += dt / w.d;
+      if (w.s >= 1) { setInst(staff, w.i, w.path.getPointAt(1), 0); live.walk = null; }
+      else setInst(staff, w.i, w.path.getPointAt(w.s));
+    }
+
+    if (!live.running || live.paused) return;
+    /* an event isn't over until its attack has landed or been stopped */
+    const rate = live.busy > 0 || threat ? LV.eventMinutesPerSecond : LV.minutesPerSecond;
+    if (live.busy > 0) {
+      live.busy -= dt;
+      if (live.busy <= 0 && threat) live.busy = .05;
+      if (live.busy <= 0 && live.active && !['open', 'close'].includes(live.active.type) && !state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.3);
+    }
+    live.t = Math.min(1440, live.t + rate * dt);
+    while (live.busy <= 0 && live.i < EVENTS.length && live.t >= EVENTS[live.i].m) {
+      const e = EVENTS[live.i++];
+      live.active = e; live.busy = e.dur || 4.5;
+      toast(lines(e));
+      if (HANDLERS[e.type]) HANDLERS[e.type](e);
+    }
+    renderHud();
+    if (live.t >= 1440 && live.busy <= 0 && !live.timers.length && !threat && !live.pend.length) liveEnd();
+  }
+
+  $('#hud-pause').addEventListener('click', () => { poke(); livePause(); });
+  $('#hud-next').addEventListener('click', () => { poke(); liveNext(); });
+  $('#hud-restart').addEventListener('click', () => { poke(); liveStart(live.mode); });
+  $('#recap-replay').addEventListener('click', () => liveStart(live.mode));
+  $('#recap-alt').addEventListener('click', () => liveStart(exposed() ? 'protected' : 'exposed'));
+  $('#recap-close').addEventListener('click', () => { recap.hidden = true; hud.hidden = true; appEl.classList.remove('live-on', 'recap-on'); clearWorld(); flyTo(overviewView()); });
+  controls.addEventListener('start', () => { live.camHold = performance.now() + 12000; });
+
+  function toggleData(force, ambient) {
     state.data = typeof force === 'boolean' ? force : !state.data;
     $('#tg-data').setAttribute('aria-checked', state.data);
     if (state.data && !flowsBuilt) buildFlows();
     flowGroup.visible = state.data;
     const lg = $('#legend'); lg.classList.toggle('on', state.data); lg.setAttribute('aria-hidden', !state.data);
-    if (!state.data) { packets.length = 0; pMesh.count = 0; threat = null; threatGroup.visible = false; }
-    else threatT = 1.2;
+    if (!state.data) { packets.length = 0; pMesh.count = 0; threat = null; threatGroup.visible = false; blockedTag.visible = false; liveStop(); }
+    else { threatT = 1.2; if (!ambient) liveStart('protected'); }
     for (const o of objects.values()) o.alpha = -1;
     applyDims();
   }
@@ -1010,8 +1397,10 @@ function createApp(L) {
     const k = e.key;
     let ok = true;
     if (k === '0') overview();
-    else if (k === 'Escape') { if (state.sel) closePanel(); else if (menu.classList.contains('open')) setMenuSheet(false); else ok = false; }
-    else if (k === 'd' || k === 'D') toggleData();
+    else if (k === 'Escape') { if (!recap.hidden) $('#recap-close').click(); else if (state.sel) closePanel(); else if (menu.classList.contains('open')) setMenuSheet(false); else ok = false; }
+    else if (/^[dDlL]$/.test(k)) toggleData();
+    else if ((k === 'n' || k === 'N') && live.running) liveNext();
+    else if ((k === 'p' || k === 'P') && live.running) livePause();
     else if (k === 'c' || k === 'C') toggleComp();
     else {
       const z = MAP.zones.find(z => z.hotkey === k);
@@ -1084,6 +1473,7 @@ function createApp(L) {
       o.group.position.y = o.lift;
       o.pulse = Math.max(0, o.pulse - dt * 1.3);
       o.mats.line.color.copy(BB).multiplyScalar(LINE_K * (1 + (hov ? .6 : 0) + (sel ? .3 : 0) + o.pulse * 1.4 + (o.unitGlow ? .8 : 0)));
+      if (o.alert) o.mats.line.color.lerp(_c.copy(C.red).multiplyScalar(2.6 * (1 + o.pulse)), o.alert);
       o.alphaCur += (o.alphaTarget - o.alphaCur) * Math.min(1, dt * 8);
       if (Math.abs(o.alphaCur - o.alpha) > .004) setAlpha(o, o.alphaCur);
       if (o.tier === 'cloud') {
@@ -1094,10 +1484,13 @@ function createApp(L) {
     }
     updateTruck(dt);
     if (state.data) {
+      liveUpdate(dt);
       if (!reduced) updatePackets(dt);
       updateThreats(dt);
     }
     updateFx(dt);
+    const lk = (state.data ? .55 : 1) * (live.running ? dayLight(live.t) : 1);
+    hemi.intensity = LIGHT.hemi * lk; sun.intensity = LIGHT.sun * lk;
     socPulse = Math.max(0, socPulse - dt * 1.1);
     if (socObj) socObj.mats.beacon.color.copy(C.red).multiplyScalar(1.2 + 4 * socPulse);
 
@@ -1108,7 +1501,8 @@ function createApp(L) {
 
   function applyParams() {
     const f = params.get('focus'), views = (params.get('view') || '').split(',');
-    if (views.includes('data')) toggleData(true);
+    if (views.includes('live')) toggleData(true);
+    else if (views.includes('data')) toggleData(true, true);
     if (views.includes('compliance')) toggleComp(true);
     if (f) { if (objects.has(f)) select(f); else if (zones.has(f)) focusZone(f); }
   }
@@ -1128,7 +1522,8 @@ function createApp(L) {
     focusMenu() { tree.querySelector('button')?.focus({ preventScroll: true }); },
     key,
     /* handy in the console: CMAP_API.select('firewall') */
-    select, focusZone, overview, toggleData, toggleComp
+    select, focusZone, overview, toggleData, toggleComp,
+    live: { start: liveStart, next: liveNext, pause: livePause, stop: liveStop, state: live }
   };
 }
 window.CMAP_LOAD = load;

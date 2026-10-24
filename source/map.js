@@ -398,6 +398,72 @@ const MAP = {
       links: [["voip", "phonesys"]] }
   ],
 
+  /* ---------------------------------------------------------------------- */
+  /* Live View: "A day at your office". A simulated 24-hour loop of scripted
+     events. `text` plays with CMIT; `exposed` plays in the optional
+     "without CMIT" replay offered on the closing card. {n} = device count.
+     Event types are animated in the scene code: open, close, helpdesk, threat,
+     ransomware, restore, offboard, backup, patch. */
+  liveView: {
+    dayStart: "07:00",
+    minutesPerSecond: 22,        /* clock speed between events */
+    eventMinutesPerSecond: 1.5,  /* clock speed while an event plays */
+    note: "Simulated day. Every number comes from this animation, not from client data.",
+    events: [
+      { at: "07:30", type: "open", dur: 2,
+        text: "7:30 AM. Your team logs in.", exposed: "7:30 AM. Your team logs in." },
+      { at: "08:45", type: "helpdesk", staff: 1, device: 1, ask: "Shared drive won't open",
+        text: "Help desk ticket fixed remotely. Back to work in minutes.",
+        exposed: "Help desk ticket opened. Nobody is watching the queue." },
+      { at: "10:15", type: "threat", target: "email", origin: 0, victim: 2, hit: "Password stolen",
+        text: "Phishing email blocked by the CMIT SOC.",
+        exposed: "Phishing email delivered. Someone typed their password into a fake login page." },
+      { at: "11:40", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened",
+        text: "Sign-in from overseas stopped by MFA.",
+        exposed: "Sign-in from overseas succeeded. Shared files were opened." },
+      { at: "13:20", type: "ransomware", target: "firewall", origin: 1, victim: 3, dur: 7,
+        text: "Ransomware download stopped at the firewall. Nobody had to unplug anything.",
+        exposed: "Ransomware got in. Computers, the server, and the backups are encrypted." },
+      { at: "15:05", type: "restore",
+        text: "Deleted folder restored from backup.",
+        exposed: "Deleted folder is gone. There is no working backup to restore from." },
+      { at: "16:50", type: "offboard", staff: 5, dur: 5.5,
+        text: "Employee's last day. Access removed from every app and the front door.",
+        exposed: "Employee's last day. Their accounts and badge still work." },
+      { at: "18:00", type: "close", dur: 2,
+        text: "6:00 PM. The office closes. We keep watching.",
+        exposed: "6:00 PM. The office closes. Nobody is watching." },
+      { at: "20:30", type: "threat", target: "firewall", origin: 4, hit: "Way in found",
+        text: "Port scan blocked and logged by the CMIT SOC.",
+        exposed: "Port scan found an open door on the firewall." },
+      { at: "23:30", type: "backup",
+        text: "Nightly backup completed and verified.",
+        exposed: "Nightly backup didn't run. Nobody noticed." },
+      { at: "02:00", type: "patch", dur: 5,
+        text: "Updates installed on {n} devices while you slept.",
+        exposed: "{n} devices are still waiting on updates." },
+      { at: "03:40", type: "threat", target: "identity", origin: 3, spread: "email", hit: "Old account used",
+        text: "Former employee's sign-in rejected. That account no longer exists.",
+        exposed: "Former employee's account used to sign in overnight." }
+    ],
+    recap: {
+      protected: {
+        preheader: "Simulated day with CMIT",
+        title: "Here's what your technology team handled today",
+        body: "Your staff worked the whole day without noticing any of it. That's the point.",
+        stats: [["blocked", "Threats blocked"], ["fixed", "Problems fixed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
+        alt: "See the same day without CMIT"
+      },
+      exposed: {
+        preheader: "Simulated day without CMIT",
+        title: "The same day without a technology team",
+        body: "Same office, same day, same threats. This time nobody was watching.",
+        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["unpatched", "Devices left unpatched"], ["open", "Former employee accounts left open"]],
+        alt: "Replay the day with CMIT"
+      }
+    }
+  },
+
   dataView: {
     threatEvery: 6,
     origins: [[-34, 9, -30], [38, 14, -34], [-30, 16, 26], [8, 24, -44], [42, 8, 20]]

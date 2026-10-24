@@ -30,6 +30,7 @@
   --g:24px; --logo-w:375px; --logo-h:96px; --logo-pad:24px;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--cmit-navy);color:var(--cmit-paper);font-family:var(--font);font-weight:300;-webkit-font-smoothing:antialiased}
 body{display:flex;flex-direction:column;min-height:100%;overflow:hidden}
 button{font-family:inherit}
@@ -182,9 +183,58 @@ kbd{font:500 10px/1 var(--font);border:1px solid rgba(var(--paper-rgb),.35);bord
 .lbl.zone .pill{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;border-color:rgba(var(--paper-rgb),.45);padding:8px 14px}
 .lbl.zone .pill kbd{margin-left:8px;letter-spacing:0}
 .lbl.zone .leader{height:26px}
+.lbl.blocked .pill{pointer-events:none;letter-spacing:.16em;text-transform:uppercase;font-size:11px;border-color:var(--cmit-paper);background:rgba(var(--navy-rgb),.9)}
 .badge{height:120px;display:flex;flex-direction:column;pointer-events:none}
 .badge .top{height:60px;display:flex;align-items:flex-start;justify-content:center;padding-top:0}
 .badge .ibox{width:24px;height:24px;padding:3px;border-radius:6px;transform:translate(-34px,-30px)}
+
+/* ---- Live View HUD + recap ---- */
+#hud{position:absolute;left:var(--g);top:132px;width:300px;z-index:8;padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px}
+.hud-row{display:flex;align-items:center;gap:6px}
+.hud-row .pre{margin:0;flex:1}
+#hud .iconbtn{width:32px;height:32px}
+#hud .iconbtn svg{width:14px;height:14px}
+#hud.exposed{border-color:var(--cmit-red)}
+.clock{margin:0;font-weight:900;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.clock small{font-size:13px;font-weight:500;margin-left:6px;letter-spacing:.08em}
+.hud-bar{height:3px;background:rgba(var(--paper-rgb),.15);border-radius:2px;overflow:hidden}
+.hud-bar i{display:block;height:100%;width:0;background:var(--cmit-bright-blue)}
+#hud.exposed .hud-bar i{background:var(--cmit-red)}
+.hud-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.hud-stats div,.recap-stats div{display:flex;flex-direction:column;gap:3px}
+.hud-stats b{font-weight:900;font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.hud-stats span{font-size:12px;line-height:1.35}
+.hud-note{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+#recap{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--g);background:rgba(var(--navy-rgb),.55)}
+#recap .card{width:min(560px,100%);max-height:100%;overflow:auto}
+#recap .inner{padding:16px 28px 18px}
+#recap h2{font-size:30px}
+.recap-on #cta{display:none}
+.recap-top{display:flex;align-items:center;gap:10px}
+.recap-top .pre{flex:1;margin:0}
+#recap h2{margin-top:10px}
+.recap-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.recap-stats div{border:1px solid var(--edge);border-radius:12px;padding:12px 14px}
+.recap-stats b{font-weight:900;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
+.recap-stats span{font-size:14px;line-height:1.4}
+.recap-actions{display:flex;flex-wrap:wrap;gap:10px}
+.recap-note{font-size:13px;line-height:1.5;opacity:.8;margin:16px 0 0}
+.recap-alt{margin-top:14px;padding-top:12px;border-top:1px solid var(--edge)}
+.linkbtn{background:none;border:0;padding:6px 0;color:var(--cmit-paper);font:500 14px/1.4 var(--font);text-decoration:underline;text-underline-offset:5px;cursor:pointer}
+.linkbtn:hover{text-decoration-color:var(--cmit-red)}
+.lbl.blocked.bad .pill{border-color:var(--cmit-red)}
+@media (max-width:639px){
+  #hud{top:60px;left:var(--g);right:var(--g);width:auto;padding:10px 12px;gap:6px}
+  .clock{font-size:24px}
+  .hud-stats{grid-template-columns:repeat(4,1fr);gap:6px}
+  .hud-stats b{font-size:16px}
+  .hud-stats span{font-size:10px}
+  .hud-note{display:none}
+  .live-on #legend{display:none}
+  #recap h2{font-size:24px}
+  #recap .inner{padding:14px 18px 18px}
+  .recap-stats b{font-size:28px}
+}
 
 /* ---- Footer (outside the canvas) ---- */
 footer.foot{flex:none;text-align:center;padding:10px 16px 12px;font-size:13px;line-height:1.6;color:var(--cmit-paper);background:var(--cmit-navy);border-top:1px solid var(--edge)}
@@ -272,11 +322,41 @@ footer.foot a:hover{text-decoration:underline}
     <div class="pfoot" id="pfoot"></div>
   </aside>
 
-  <div id="legend" class="glass" aria-hidden="true"><p class="pre">Data View</p><ul id="legend-list"></ul></div>
+  <div id="legend" class="glass" aria-hidden="true"><p class="pre">Live View</p><ul id="legend-list"></ul></div>
   <div id="toast" class="glass" role="status" aria-live="polite"><span class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><p id="toast-text"></p></div>
 
+  <section id="hud" class="glass" aria-label="Live View clock" hidden>
+    <div class="hud-row"><p class="pre" id="hud-mode">With CMIT</p>
+      <button class="iconbtn" id="hud-restart" type="button" aria-label="Restart the day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
+      <button class="iconbtn" id="hud-pause" type="button" aria-label="Pause"></button>
+      <button class="iconbtn" id="hud-next" type="button" aria-label="Skip to next event (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/></svg></button>
+    </div>
+    <p class="clock" id="hud-clock" aria-live="off">7:00<small>AM</small></p>
+    <div class="hud-bar" aria-hidden="true"><i id="hud-bar"></i></div>
+    <div class="hud-stats" id="hud-stats"></div>
+    <p class="hud-note">Simulated day</p>
+  </section>
+
+  <div id="recap" hidden>
+    <section class="card glass" role="dialog" aria-labelledby="recap-h">
+      <div class="cmit-bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="inner">
+        <div class="recap-top"><p class="pre" id="recap-pre"></p><button class="iconbtn" id="recap-close" type="button" aria-label="Close and keep exploring"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+        <h2 class="h-long" id="recap-h"></h2>
+        <p class="body" id="recap-body"></p>
+        <div class="recap-stats" id="recap-stats"></div>
+        <div class="recap-actions">
+          <a class="btn btn-primary" id="recap-cta" href="https://calendly.com/osison-cmitsolutions/30min" target="_blank" rel="noopener">Book a free IT Health Check</a>
+          <button class="btn btn-sec" id="recap-replay" type="button">Replay the day</button>
+        </div>
+        <p class="recap-note" id="recap-note"></p>
+        <div class="recap-alt"><button class="linkbtn" id="recap-alt" type="button"></button></div>
+      </div>
+    </section>
+  </div>
+
   <div id="toggles">
-    <button class="btn btn-sec switch" id="tg-data" type="button" role="switch" aria-checked="false"><span class="track"></span>Data View <kbd>D</kbd></button>
+    <button class="btn btn-sec switch" id="tg-data" type="button" role="switch" aria-checked="false"><span class="track"></span>Live View <kbd>D</kbd></button>
     <button class="btn btn-sec switch" id="tg-comp" type="button" role="switch" aria-checked="false"><span class="track"></span>Compliance <kbd>C</kbd></button>
   </div>
   <button class="iconbtn" id="fs" type="button" aria-label="Full screen"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
