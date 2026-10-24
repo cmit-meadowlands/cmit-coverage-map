@@ -16,7 +16,9 @@ Interactive 3D "Your Technology Team" map for CMIT Solutions of the Meadowlands.
   allow="fullscreen" style="width:100%;height:min(85vh,800px);border:0"></iframe>
 ```
 
-Deep links: `?focus=firewall` (any object or zone id), `?view=data`, `?view=data,compliance`.
+Deep links: `?focus=firewall` (any object or zone id), `?view=live` (plays the simulated day), `?view=data` (flows only, no day), `?view=live,compliance`.
 `?inventory=1` shows regenerated WordPress inventory HTML with a Copy button.
 
-Hotkeys: 0 overview, 1–4 office zones, 5 cloud, 6 SOC, 7 remote, 8 truck, D Data View, C Compliance, Esc close.
+Hotkeys: 0 overview, 1–4 office zones, 5 cloud, 6 SOC, 7 remote, 8 truck, D or L Live View, N next event, P pause, C Compliance, Esc close.
+
+Live View plays a simulated 24-hour day scripted in `MAP.liveView` (times, copy, recap stats). The closing card offers an optional replay of the same day without CMIT.
