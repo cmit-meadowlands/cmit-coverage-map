@@ -291,59 +291,59 @@ const MAP = {
       objects: [
         { id: "email", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
           tag: "Phishing filtering, impersonation defense",
-          model: "tile", at: [[-8.6, 10.78, -6.6]],
+          model: "tile", at: [[-9.2, 9.68, -23.1]],
           summary: "Email is where most attacks start. We filter spam and phishing before it reaches the inbox, block impersonation of you and your vendors, and turn on protections that Microsoft 365 leaves off by default.",
           bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by the CMIT SOC"],
           compliance: "Email is a common place for patient and customer data to leak. Message encryption and data loss prevention rules support HIPAA and FTC Safeguards Rule obligations." },
 
         { id: "identity", name: "Identity & MFA", link: "SEC", handlers: ["soc", "remote"], icon: "lock",
           tag: "Single sign-on, conditional access, MFA everywhere",
-          model: "tile", at: [[-4.4, 10.78, -6.6]],
+          model: "tile", at: [[-5.0, 9.68, -23.1]],
           summary: "Your login is the new front door. We set up single sign-on (one login for every app), conditional access that checks where and how people sign in, and MFA (multi-factor authentication) everywhere.",
           bullets: ["Single sign-on across your apps", "Conditional access by device and location", "MFA for every user", "Same-day onboarding and offboarding"] },
 
         { id: "files", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
           tag: "Permissions, retention, ransomware rollback",
-          model: "tile", at: [[-0.2, 10.78, -6.6]],
+          model: "tile", at: [[-0.8, 9.68, -23.1]],
           summary: "Your files live in Microsoft 365 now, which makes sharing easy, sometimes too easy. We set permissions, retention, and version history, so one bad click or a ransomware event can be rolled back.",
           bullets: ["Permissions and sharing policies", "Retention and version history", "Ransomware rollback", "Migration from old file servers"],
           compliance: "Retention rules and access reviews help show HIPAA and FTC Safeguards Rule auditors who can open sensitive files and how long you keep them." },
 
         { id: "teams", name: "Teams & collaboration", link: "APP", handlers: ["remote"], icon: "chat",
           tag: "Governance, external sharing controls",
-          model: "tile", at: [[-8.6, 10.78, -3.5]],
+          model: "tile", at: [[-9.2, 9.68, -20.0]],
           summary: "Teams is your office's group chat, meeting room, and file hub in one place. We set governance so channels don't sprawl, and we control what can be shared with people outside the company.",
           bullets: ["Team and channel governance", "External sharing and guest access controls", "Meeting and calling policies", "Training for your staff"] },
 
         { id: "web", name: "Website, domain & DNS", link: "CLD", handlers: ["remote"], icon: "globe",
           tag: "Domain lock, SSL, SPF/DKIM/DMARC",
-          model: "tile", at: [[-4.4, 10.78, -3.5]],
+          model: "tile", at: [[-5.0, 9.68, -20.0]],
           summary: "Your domain is the root of your email and your website. We lock it against hijacking, keep SSL certificates valid, and set up SPF, DKIM, and DMARC (email authentication records) so nobody can send email pretending to be you.",
           bullets: ["Domain registrar lock and renewal tracking", "SSL certificate monitoring", "SPF, DKIM, and DMARC setup", "DNS (domain name system) management"] },
 
         { id: "lob", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
           tag: "Vendor coordination, access reviews",
-          model: "tile", at: [[-0.2, 10.78, -3.5]],
+          model: "tile", at: [[-0.8, 9.68, -20.0]],
           summary: "This is the software that runs your business: an EHR (electronic health record), accounting, or CRM (customer relationship management) system. We coordinate with the vendor, handle updates, and review who has access.",
           bullets: ["Vendor coordination and escalation", "Updates and integration support", "Regular access reviews", "Onboarding and offboarding in every app"],
           compliance: "These apps hold your most regulated data. Access reviews and audit logs support HIPAA, the FTC Safeguards Rule, and your client contract requirements." },
 
         { id: "cloudbackup", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
           tag: "Offsite immutable copies",
-          model: "tile", at: [[-8.6, 10.78, -0.4]],
+          model: "tile", at: [[-9.2, 9.68, -16.9]],
           summary: "Microsoft keeps 365 running, but recovering your deleted or encrypted data is your job. We back up email, OneDrive, SharePoint, and Teams, plus your servers, to immutable offsite storage that can't be altered or deleted.",
           bullets: ["Microsoft 365 backup", "Offsite server backup", "Immutable, tamper-proof copies", "Tested restores"],
           compliance: "Immutable offsite copies support the backup and disaster recovery expectations in HIPAA and the FTC Safeguards Rule." },
 
         { id: "phonesys", name: "Hosted phone system", link: "UC", handlers: ["remote"], icon: "phone",
           tag: "Auto-attendant, mobile app, call recording",
-          model: "tile", at: [[-4.4, 10.78, -0.4]],
+          model: "tile", at: [[-5.0, 9.68, -16.9]],
           summary: "Your phone system lives in the cloud, so it follows your team anywhere. We set up the auto-attendant, mobile apps, and call recording, and we change them whenever you need.",
           bullets: ["Auto-attendant and call flows", "Mobile and desktop apps", "Call recording and voicemail-to-email", "Number porting handled for you"] },
 
         { id: "ai", name: "AI & automation", link: "AI", handlers: ["remote"], icon: "spark",
           tag: "Managed AI tools, workflow automation, guardrails",
-          model: "tile", at: [[-0.2, 10.78, -0.4]],
+          model: "tile", at: [[-0.8, 9.68, -16.9]],
           summary: "AI can save your team hours every week, as long as it is set up safely. We deploy managed AI tools, automate repetitive workflows, and put guardrails in place so company data stays where it belongs.",
           bullets: ["Managed AI tools such as Microsoft Copilot", "Workflow automation between your apps", "Data guardrails and usage policies", "Staff training on safe, effective use"] }
       ]
@@ -502,7 +502,7 @@ const MAP = {
       { model: "block", size: [1.1, 0.4, 0.6], at: [[-2.9, 0, 3.6]] },
       { model: "couch", at: [[-1.1, 0, 3.6, -90]] }
     ],
-    cloudPlatform: { center: [-4.4, 10.6, -3.5], size: [13.6, 0.12, 9.6] },
+    cloudPlatform: { center: [-5, 9.5, -20], size: [13.6, 0.12, 9.6] },
     pads: [
       { center: [21, -5.5], size: [7.2, 6] },
       { center: [21, 4.5], size: [7.2, 6.4] }

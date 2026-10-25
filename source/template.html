@@ -236,6 +236,14 @@ kbd{font:500 10px/1 var(--font);border:1px solid rgba(var(--paper-rgb),.35);bord
   .recap-stats b{font-size:28px}
 }
 
+/* ---- Camera nav ---- */
+#nav{position:absolute;right:var(--g);bottom:88px;z-index:7;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+#nav .iconbtn{width:40px;height:40px;background:var(--glass);border-color:rgba(var(--paper-rgb),.45)}
+#nav .iconbtn:hover{background:var(--cmit-paper);color:var(--cmit-blue)}
+.nav-hint{display:none}
+.panel-open #nav{display:none}
+@media (max-width:1180px) and (min-width:640px){ #nav{bottom:140px} }
+
 /* ---- Footer (outside the canvas) ---- */
 footer.foot{flex:none;text-align:center;padding:10px 16px 12px;font-size:13px;line-height:1.6;color:var(--cmit-paper);background:var(--cmit-navy);border-top:1px solid var(--edge)}
 footer.foot a{text-decoration:none}
@@ -282,7 +290,10 @@ footer.foot a:hover{text-decoration:underline}
   #fs{display:none}
   #legend{top:70px;bottom:auto;left:var(--g);padding:10px 12px;min-width:0}
   #legend li{font-size:12px}
-  #toast{bottom:auto;top:70px}
+  #toast{bottom:124px;top:auto;z-index:22}
+  #nav{flex-direction:row;right:var(--g);bottom:auto;top:84px;gap:6px}
+  #nav .iconbtn{width:36px;height:36px}
+  .live-on #nav{top:auto;bottom:124px;display:none}
   .lbl .pill{font-size:12px}
   .lbl.zone .pill{font-size:10px;letter-spacing:.1em;padding:5px 9px}
   .lbl.zone .pill kbd{display:none}
@@ -355,6 +366,14 @@ footer.foot a:hover{text-decoration:underline}
     </section>
   </div>
 
+  <div id="nav" role="group" aria-label="Camera controls">
+    <button class="iconbtn" id="nav-left" type="button" aria-label="Rotate left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
+    <button class="iconbtn" id="nav-right" type="button" aria-label="Rotate right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></svg></button>
+    <button class="iconbtn" id="nav-in" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="iconbtn" id="nav-out" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+    <button class="iconbtn" id="nav-home" type="button" aria-label="Back to overview (0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></button>
+    <p class="nav-hint">Drag to rotate · Right-drag or two fingers to move · Scroll or pinch to zoom</p>
+  </div>
   <div id="toggles">
     <button class="btn btn-sec switch" id="tg-data" type="button" role="switch" aria-checked="false"><span class="track"></span>Live View <kbd>D</kbd></button>
     <button class="btn btn-sec switch" id="tg-comp" type="button" role="switch" aria-checked="false"><span class="track"></span>Compliance <kbd>C</kbd></button>

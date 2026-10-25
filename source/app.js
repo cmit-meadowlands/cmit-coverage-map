@@ -105,7 +105,8 @@ function createApp(L) {
   const camera = new T.PerspectiveCamera(35, 1, 0.3, 500);
   const controls = new L.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.maxPolarAngle = deg(84); controls.minDistance = 2.5; controls.maxDistance = 140;
+  controls.maxPolarAngle = deg(84); controls.minDistance = 2.5; controls.maxDistance = 220;
+  controls.zoomToCursor = true; controls.screenSpacePanning = true; controls.panSpeed = 1.1; controls.rotateSpeed = .8;
   controls.zoomSpeed = 0.8;
   controls.autoRotateSpeed = MAP.render.autoRotateSpeed;
 
@@ -505,24 +506,27 @@ function createApp(L) {
     zones.get('cloud')?.box.union(new T.Box3().setFromObject(pm));
     const fw = objects.get('firewall');
     if (fw) {
-      const top = fw.anchors[0], yb = cp.center[1] - cp.size[1] / 2, h = yb - top.y;
+      const top = fw.anchors[0], yb = cp.center[1] - cp.size[1] / 2;
       const beamMat = new T.ShaderMaterial({
         uniforms: { cA: { value: BB.clone() }, cB: { value: C.purple.clone() }, uTime: { value: 0 }, uSpeed: { value: 3 } },
         vertexShader: tubeVS,
         fragmentShader: `uniform vec3 cA; uniform vec3 cB; uniform float uTime; uniform float uSpeed; varying vec2 vUv;
-          void main(){ float b = 0.5 + 0.5 * sin(vUv.y * 36.0 - uTime * uSpeed); vec3 c = mix(cA, cB, vUv.y) * (0.8 + 0.9 * b);
+          void main(){ float b = 0.5 + 0.5 * sin(vUv.x * 60.0 - uTime * uSpeed); vec3 c = mix(cA, cB, vUv.x) * (0.8 + 0.9 * b);
             gl_FragColor = vec4(c, 0.3 + 0.45 * b);
             #include <colorspace_fragment>
           }`,
         transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide
       });
       beamMat.userData.speed = 3; timed.push(beamMat);
-      for (const [dx, dz] of [[-.28, 0], [.28, 0], [0, .2]]) {
-        const m = new T.Mesh(new T.CylinderGeometry(.035, .035, h, 8, 1, true), beamMat);
-        m.position.set(top.x + dx, top.y + h / 2, top.z + dz); world.add(m);
+      /* Riser up through the roof, then an arc back to the cloud platform (which sits behind the building). */
+      const hubP = new V3(Math.max(cp.center[0] - cp.size[0] / 2 + 1.6, top.x), yb - .02, cp.center[2] + cp.size[2] / 2 - 1.2);
+      for (const [dx, dz] of [[-.25, 0], [.25, 0], [0, .22]]) {
+        const a = top.clone().add(new V3(dx, 0, dz)), b = hubP.clone().add(new V3(dx, 0, dz));
+        const curve = new T.CatmullRomCurve3([a, new V3(a.x, 5.2, a.z), new V3((a.x + b.x) / 2, (5.2 + b.y) / 2 + 1.4, (a.z + b.z) / 2), b], false, 'centripetal');
+        world.add(new T.Mesh(new T.TubeGeometry(curve, 64, .035, 6), beamMat));
       }
       const hub = new T.Mesh(new T.TorusGeometry(.55, .03, 8, 32), new T.MeshBasicMaterial({ color: hdr(BB, 2.2), toneMapped: false }));
-      hub.rotation.x = Math.PI / 2; hub.position.set(top.x, yb - .02, top.z); world.add(hub);
+      hub.rotation.x = Math.PI / 2; hub.position.copy(hubP); world.add(hub);
     }
   }
 
@@ -681,7 +685,7 @@ function createApp(L) {
       ${comp}`;
     $('#pfoot').innerHTML = `<a class="btn btn-sec learn" href="${esc(CMAP.linkOf(d.link))}" target="_blank" rel="noopener">Learn more<span class="sr-only">: ${esc(MAP.links[d.link].label)}</span> ${ARROW}</a>`;
     pbody.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { poke(); toggleBeam(b.dataset.h, b); }));
-    panel.classList.add('open');
+    panel.classList.add('open'); appEl.classList.add('panel-open');
     if (!isPhone() && W < 1100 && !menu.classList.contains('collapsed')) $('#menu-collapse').click();
     panel.setAttribute('aria-hidden', 'false');
     pbody.scrollTop = 0;
@@ -690,7 +694,7 @@ function createApp(L) {
     setShift(true);
   }
   function hidePanel() {
-    panel.classList.remove('open');
+    panel.classList.remove('open'); appEl.classList.remove('panel-open');
     panel.setAttribute('aria-hidden', 'true');
     setShift(false);
   }
@@ -1373,6 +1377,24 @@ function createApp(L) {
   cv.addEventListener('wheel', poke, { passive: true });
   /* Don't trap page scroll: wheel-zoom only after the visitor clicks into the scene. */
   document.documentElement.addEventListener('mouseleave', () => { controls.enableZoom = false; });
+  cv.addEventListener('pointermove', e => { if (state.engaged && e.buttons === 0 && !controls.enableZoom) controls.enableZoom = true; });
+  /* on-screen navigation */
+  const zoomBy = k => {
+    poke(); fly = null;
+    const d = camera.position.clone().sub(controls.target);
+    const len = clamp(d.length() * k, controls.minDistance, controls.maxDistance);
+    flyTo({ pos: controls.target.clone().add(d.setLength(len)), target: controls.target.clone() }, .45);
+  };
+  const orbitBy = a => {
+    poke(); fly = null;
+    const d = camera.position.clone().sub(controls.target).applyAxisAngle(new V3(0, 1, 0), a);
+    flyTo({ pos: controls.target.clone().add(d), target: controls.target.clone() }, .45);
+  };
+  $('#nav-in').addEventListener('click', () => zoomBy(.7));
+  $('#nav-out').addEventListener('click', () => zoomBy(1.45));
+  $('#nav-left').addEventListener('click', () => orbitBy(-Math.PI / 6));
+  $('#nav-right').addEventListener('click', () => orbitBy(Math.PI / 6));
+  $('#nav-home').addEventListener('click', () => { poke(); overview(); });
 
   const veil = $('#veil');
   function setEngaged(on) {
