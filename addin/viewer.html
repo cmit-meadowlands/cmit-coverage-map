@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMIT Live Web Page</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+  :root { --navy: #001B28; --blue: #002f44; --red: #ef3f37; --paper: #f4f8fa; --slate: #9ba8b1; }
+  html, body { margin: 0; height: 100%; background: var(--navy); overflow: hidden; font-family: "Avenir Next", Avenir, Arial, Helvetica, sans-serif; }
+  #frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  /* Edit control: only visible on hover while editing, never during the slide show */
+  #edit { position: absolute; top: 8px; right: 8px; z-index: 2; display: none; gap: 6px; align-items: center;
+          background: rgba(0,27,40,.92); padding: 6px; border-radius: 22px; box-shadow: 0 0 12px rgba(0,0,0,.25); }
+  body.editing:hover #edit { display: flex; }
+  #edit input { width: 360px; max-width: 60vw; border: 1px solid var(--slate); border-radius: 16px; padding: 6px 12px;
+                background: var(--paper); color: var(--blue); font: inherit; font-size: 12px; }
+  #edit button { border: 0; border-radius: 16px; padding: 6px 14px; background: var(--red); color: #fff; font: inherit; font-size: 12px; cursor: pointer; }
+  #msg { position: absolute; inset: 0; display: none; place-items: center; color: var(--paper); text-align: center; padding: 24px; font-size: 14px; }
+</style>
+</head>
+<body>
+<iframe id="frame" title="Live web page" allow="fullscreen; autoplay" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<div id="edit" role="form" aria-label="Page address">
+  <input id="url" type="url" spellcheck="false" aria-label="Web page address (https)">
+  <button id="save" type="button">Show</button>
+</div>
+<div id="msg"></div>
+<script>
+  const DEFAULT_URL = "https://cmit-meadowlands.github.io/cmit-coverage-map/?view=live";
+  const frame = document.getElementById("frame");
+  const input = document.getElementById("url");
+  const msg = document.getElementById("msg");
+
+  function show(url) {
+    if (!/^https:\/\//i.test(url)) { msg.textContent = "Use an https:// address."; msg.style.display = "grid"; return; }
+    msg.style.display = "none";
+    input.value = url;
+    if (frame.src !== url) frame.src = url;
+  }
+
+  // Edit mode = normal PowerPoint editing; read mode = slide show. Hide the URL bar in the show.
+  function trackView() {
+    if (!Office.context.document.getActiveViewAsync) { document.body.classList.add("editing"); return; }
+    const apply = (v) => document.body.classList.toggle("editing", v !== "read");
+    Office.context.document.getActiveViewAsync((r) => apply(r.value));
+    Office.context.document.addHandlerAsync(Office.EventType.ActiveViewChanged, (e) => apply(e.activeView));
+  }
+
+  if (typeof Office === "undefined") show(DEFAULT_URL); // office.js didn't load
+  else Office.onReady(() => {
+    if (!Office.context || !Office.context.document) { show(DEFAULT_URL); return; } // opened outside PowerPoint
+    const settings = Office.context.document.settings;
+    show(settings.get("url") || DEFAULT_URL);
+    trackView();
+    const save = () => {
+      const url = input.value.trim();
+      show(url);
+      if (/^https:\/\//i.test(url)) { settings.set("url", url); settings.saveAsync(); }
+    };
+    document.getElementById("save").addEventListener("click", save);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
+  });
+</script>
+</body>
+</html>

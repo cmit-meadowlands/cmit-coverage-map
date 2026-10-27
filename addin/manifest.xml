@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PowerPoint content add-in: shows a live, interactive web page inside a slide.
+     Defaults to the CMIT coverage map. Hosted from this repo on GitHub Pages. -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:type="ContentApp">
+  <Id>e66bd09a-6ca1-49ff-974b-dca0d1d0785e</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>CMIT Solutions of the Meadowlands</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="CMIT Live Web Page" />
+  <Description DefaultValue="Show a live, interactive web page inside a slide. Defaults to the CMIT coverage map." />
+  <IconUrl DefaultValue="https://cmit-meadowlands.github.io/cmit-coverage-map/addin/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://cmit-meadowlands.github.io/cmit-coverage-map/addin/icon-64.png" />
+  <SupportUrl DefaultValue="https://cmitsolutions.com/clifton-nj-1237" />
+  <AppDomains>
+    <AppDomain>https://cmit-meadowlands.github.io</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation" />
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://cmit-meadowlands.github.io/cmit-coverage-map/addin/viewer.html" />
+    <RequestedWidth>960</RequestedWidth>
+    <RequestedHeight>540</RequestedHeight>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <AllowSnapshot>true</AllowSnapshot>
+</OfficeApp>
