@@ -299,59 +299,59 @@ const MAP = {
       objects: [
         { id: "email", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
           tag: "Phishing filtering, impersonation defense",
-          model: "tile", at: [[-8.6, 10.78, -6.6]],
+          model: "tile", at: [[-9.2, 9.68, -23.1]],
           summary: "Email is where most attacks start. We filter spam and phishing before it reaches the inbox, block impersonation of you and your vendors, and turn on protections that Microsoft 365 leaves off by default.",
           bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by the CMIT SOC"],
           compliance: "Email is a common place for patient and customer data to leak. Message encryption and data loss prevention rules support HIPAA and FTC Safeguards Rule obligations." },
 
         { id: "identity", name: "Identity & MFA", link: "SEC", handlers: ["soc", "remote"], icon: "lock",
           tag: "Single sign-on, conditional access, MFA everywhere",
-          model: "tile", at: [[-4.4, 10.78, -6.6]],
+          model: "tile", at: [[-5.0, 9.68, -23.1]],
           summary: "Your login is the new front door. We set up single sign-on (one login for every app), conditional access that checks where and how people sign in, and MFA (multi-factor authentication) everywhere.",
           bullets: ["Single sign-on across your apps", "Conditional access by device and location", "MFA for every user", "Same-day onboarding and offboarding"] },
 
         { id: "files", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
           tag: "Permissions, retention, ransomware rollback",
-          model: "tile", at: [[-0.2, 10.78, -6.6]],
+          model: "tile", at: [[-0.8, 9.68, -23.1]],
           summary: "Your files live in Microsoft 365 now, which makes sharing easy, sometimes too easy. We set permissions, retention, and version history, so one bad click or a ransomware event can be rolled back.",
           bullets: ["Permissions and sharing policies", "Retention and version history", "Ransomware rollback", "Migration from old file servers"],
           compliance: "Retention rules and access reviews help show HIPAA and FTC Safeguards Rule auditors who can open sensitive files and how long you keep them." },
 
         { id: "teams", name: "Teams & collaboration", link: "APP", handlers: ["remote"], icon: "chat",
           tag: "Governance, external sharing controls",
-          model: "tile", at: [[-8.6, 10.78, -3.5]],
+          model: "tile", at: [[-9.2, 9.68, -20.0]],
           summary: "Teams is your office's group chat, meeting room, and file hub in one place. We set governance so channels don't sprawl, and we control what can be shared with people outside the company.",
           bullets: ["Team and channel governance", "External sharing and guest access controls", "Meeting and calling policies", "Training for your staff"] },
 
         { id: "web", name: "Website, domain & DNS", link: "CLD", handlers: ["remote"], icon: "globe",
           tag: "Domain lock, SSL, SPF/DKIM/DMARC",
-          model: "tile", at: [[-4.4, 10.78, -3.5]],
+          model: "tile", at: [[-5.0, 9.68, -20.0]],
           summary: "Your domain is the root of your email and your website. We lock it against hijacking, keep SSL certificates valid, and set up SPF, DKIM, and DMARC (email authentication records) so nobody can send email pretending to be you.",
           bullets: ["Domain registrar lock and renewal tracking", "SSL certificate monitoring", "SPF, DKIM, and DMARC setup", "DNS (domain name system) management"] },
 
         { id: "lob", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
           tag: "Vendor coordination, access reviews",
-          model: "tile", at: [[-0.2, 10.78, -3.5]],
+          model: "tile", at: [[-0.8, 9.68, -20.0]],
           summary: "This is the software that runs your business: an EHR (electronic health record), accounting, or CRM (customer relationship management) system. We coordinate with the vendor, handle updates, and review who has access.",
           bullets: ["Vendor coordination and escalation", "Updates and integration support", "Regular access reviews", "Onboarding and offboarding in every app"],
           compliance: "These apps hold your most regulated data. Access reviews and audit logs support HIPAA, the FTC Safeguards Rule, and your client contract requirements." },
 
         { id: "cloudbackup", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
           tag: "Offsite immutable copies",
-          model: "tile", at: [[-8.6, 10.78, -0.4]],
+          model: "tile", at: [[-9.2, 9.68, -16.9]],
           summary: "Microsoft keeps 365 running, but recovering your deleted or encrypted data is your job. We back up email, OneDrive, SharePoint, and Teams, plus your servers, to immutable offsite storage that can't be altered or deleted.",
           bullets: ["Microsoft 365 backup", "Offsite server backup", "Immutable, tamper-proof copies", "Tested restores"],
           compliance: "Immutable offsite copies support the backup and disaster recovery expectations in HIPAA and the FTC Safeguards Rule." },
 
         { id: "phonesys", name: "Hosted phone system", link: "UC", handlers: ["remote"], icon: "phone",
           tag: "Auto-attendant, mobile app, call recording",
-          model: "tile", at: [[-4.4, 10.78, -0.4]],
+          model: "tile", at: [[-5.0, 9.68, -16.9]],
           summary: "Your phone system lives in the cloud, so it follows your team anywhere. We set up the auto-attendant, mobile apps, and call recording, and we change them whenever you need.",
           bullets: ["Auto-attendant and call flows", "Mobile and desktop apps", "Call recording and voicemail-to-email", "Number porting handled for you"] },
 
         { id: "ai", name: "AI & automation", link: "AI", handlers: ["remote"], icon: "spark",
           tag: "Managed AI tools, workflow automation, guardrails",
-          model: "tile", at: [[-0.2, 10.78, -0.4]],
+          model: "tile", at: [[-0.8, 9.68, -16.9]],
           summary: "AI can save your team hours every week, as long as it is set up safely. We deploy managed AI tools, automate repetitive workflows, and put guardrails in place so company data stays where it belongs.",
           bullets: ["Managed AI tools such as Microsoft Copilot", "Workflow automation between your apps", "Data guardrails and usage policies", "Staff training on safe, effective use"] }
       ]
@@ -510,7 +510,7 @@ const MAP = {
       { model: "block", size: [1.1, 0.4, 0.6], at: [[-2.9, 0, 3.6]] },
       { model: "couch", at: [[-1.1, 0, 3.6, -90]] }
     ],
-    cloudPlatform: { center: [-4.4, 10.6, -3.5], size: [13.6, 0.12, 9.6] },
+    cloudPlatform: { center: [-5, 9.5, -20], size: [13.6, 0.12, 9.6] },
     pads: [
       { center: [21, -5.5], size: [7.2, 6] },
       { center: [21, 4.5], size: [7.2, 6.4] }
@@ -824,6 +824,14 @@ kbd{font:500 10px/1 var(--font);border:1px solid rgba(var(--paper-rgb),.35);bord
   .recap-stats b{font-size:28px}
 }
 
+/* ---- Camera nav ---- */
+#nav{position:absolute;right:var(--g);bottom:88px;z-index:7;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+#nav .iconbtn{width:40px;height:40px;background:var(--glass);border-color:rgba(var(--paper-rgb),.45)}
+#nav .iconbtn:hover{background:var(--cmit-paper);color:var(--cmit-blue)}
+.nav-hint{display:none}
+.panel-open #nav{display:none}
+@media (max-width:1180px) and (min-width:640px){ #nav{bottom:140px} }
+
 /* ---- Footer (outside the canvas) ---- */
 footer.foot{flex:none;text-align:center;padding:10px 16px 12px;font-size:13px;line-height:1.6;color:var(--cmit-paper);background:var(--cmit-navy);border-top:1px solid var(--edge)}
 footer.foot a{text-decoration:none}
@@ -870,7 +878,10 @@ footer.foot a:hover{text-decoration:underline}
   #fs{display:none}
   #legend{top:70px;bottom:auto;left:var(--g);padding:10px 12px;min-width:0}
   #legend li{font-size:12px}
-  #toast{bottom:auto;top:70px}
+  #toast{bottom:124px;top:auto;z-index:22}
+  #nav{flex-direction:row;right:var(--g);bottom:auto;top:84px;gap:6px}
+  #nav .iconbtn{width:36px;height:36px}
+  .live-on #nav{top:auto;bottom:124px;display:none}
   .lbl .pill{font-size:12px}
   .lbl.zone .pill{font-size:10px;letter-spacing:.1em;padding:5px 9px}
   .lbl.zone .pill kbd{display:none}
@@ -943,6 +954,14 @@ footer.foot a:hover{text-decoration:underline}
     </section>
   </div>
 
+  <div id="nav" role="group" aria-label="Camera controls">
+    <button class="iconbtn" id="nav-left" type="button" aria-label="Rotate left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
+    <button class="iconbtn" id="nav-right" type="button" aria-label="Rotate right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></svg></button>
+    <button class="iconbtn" id="nav-in" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="iconbtn" id="nav-out" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+    <button class="iconbtn" id="nav-home" type="button" aria-label="Back to overview (0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></button>
+    <p class="nav-hint">Drag to rotate · Right-drag or two fingers to move · Scroll or pinch to zoom</p>
+  </div>
   <div id="toggles">
     <button class="btn btn-sec switch" id="tg-data" type="button" role="switch" aria-checked="false"><span class="track"></span>Live View <kbd>D</kbd></button>
     <button class="btn btn-sec switch" id="tg-comp" type="button" role="switch" aria-checked="false"><span class="track"></span>Compliance <kbd>C</kbd></button>
@@ -1087,7 +1106,8 @@ function createApp(L) {
   const camera = new T.PerspectiveCamera(35, 1, 0.3, 500);
   const controls = new L.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.maxPolarAngle = deg(84); controls.minDistance = 2.5; controls.maxDistance = 140;
+  controls.maxPolarAngle = deg(84); controls.minDistance = 2.5; controls.maxDistance = 220;
+  controls.zoomToCursor = true; controls.screenSpacePanning = true; controls.panSpeed = 1.1; controls.rotateSpeed = .8;
   controls.zoomSpeed = 0.8;
   controls.autoRotateSpeed = MAP.render.autoRotateSpeed;
 
@@ -1487,24 +1507,27 @@ function createApp(L) {
     zones.get('cloud')?.box.union(new T.Box3().setFromObject(pm));
     const fw = objects.get('firewall');
     if (fw) {
-      const top = fw.anchors[0], yb = cp.center[1] - cp.size[1] / 2, h = yb - top.y;
+      const top = fw.anchors[0], yb = cp.center[1] - cp.size[1] / 2;
       const beamMat = new T.ShaderMaterial({
         uniforms: { cA: { value: BB.clone() }, cB: { value: C.purple.clone() }, uTime: { value: 0 }, uSpeed: { value: 3 } },
         vertexShader: tubeVS,
         fragmentShader: `uniform vec3 cA; uniform vec3 cB; uniform float uTime; uniform float uSpeed; varying vec2 vUv;
-          void main(){ float b = 0.5 + 0.5 * sin(vUv.y * 36.0 - uTime * uSpeed); vec3 c = mix(cA, cB, vUv.y) * (0.8 + 0.9 * b);
+          void main(){ float b = 0.5 + 0.5 * sin(vUv.x * 60.0 - uTime * uSpeed); vec3 c = mix(cA, cB, vUv.x) * (0.8 + 0.9 * b);
             gl_FragColor = vec4(c, 0.3 + 0.45 * b);
             #include <colorspace_fragment>
           }`,
         transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide
       });
       beamMat.userData.speed = 3; timed.push(beamMat);
-      for (const [dx, dz] of [[-.28, 0], [.28, 0], [0, .2]]) {
-        const m = new T.Mesh(new T.CylinderGeometry(.035, .035, h, 8, 1, true), beamMat);
-        m.position.set(top.x + dx, top.y + h / 2, top.z + dz); world.add(m);
+      /* Riser up through the roof, then an arc back to the cloud platform (which sits behind the building). */
+      const hubP = new V3(Math.max(cp.center[0] - cp.size[0] / 2 + 1.6, top.x), yb - .02, cp.center[2] + cp.size[2] / 2 - 1.2);
+      for (const [dx, dz] of [[-.25, 0], [.25, 0], [0, .22]]) {
+        const a = top.clone().add(new V3(dx, 0, dz)), b = hubP.clone().add(new V3(dx, 0, dz));
+        const curve = new T.CatmullRomCurve3([a, new V3(a.x, 5.2, a.z), new V3((a.x + b.x) / 2, (5.2 + b.y) / 2 + 1.4, (a.z + b.z) / 2), b], false, 'centripetal');
+        world.add(new T.Mesh(new T.TubeGeometry(curve, 64, .035, 6), beamMat));
       }
       const hub = new T.Mesh(new T.TorusGeometry(.55, .03, 8, 32), new T.MeshBasicMaterial({ color: hdr(BB, 2.2), toneMapped: false }));
-      hub.rotation.x = Math.PI / 2; hub.position.set(top.x, yb - .02, top.z); world.add(hub);
+      hub.rotation.x = Math.PI / 2; hub.position.copy(hubP); world.add(hub);
     }
   }
 
@@ -1663,7 +1686,7 @@ function createApp(L) {
       ${comp}`;
     $('#pfoot').innerHTML = `<a class="btn btn-sec learn" href="${esc(CMAP.linkOf(d.link))}" target="_blank" rel="noopener">Learn more<span class="sr-only">: ${esc(MAP.links[d.link].label)}</span> ${ARROW}</a>`;
     pbody.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { poke(); toggleBeam(b.dataset.h, b); }));
-    panel.classList.add('open');
+    panel.classList.add('open'); appEl.classList.add('panel-open');
     if (!isPhone() && W < 1100 && !menu.classList.contains('collapsed')) $('#menu-collapse').click();
     panel.setAttribute('aria-hidden', 'false');
     pbody.scrollTop = 0;
@@ -1672,7 +1695,7 @@ function createApp(L) {
     setShift(true);
   }
   function hidePanel() {
-    panel.classList.remove('open');
+    panel.classList.remove('open'); appEl.classList.remove('panel-open');
     panel.setAttribute('aria-hidden', 'true');
     setShift(false);
   }
@@ -2355,6 +2378,24 @@ function createApp(L) {
   cv.addEventListener('wheel', poke, { passive: true });
   /* Don't trap page scroll: wheel-zoom only after the visitor clicks into the scene. */
   document.documentElement.addEventListener('mouseleave', () => { controls.enableZoom = false; });
+  cv.addEventListener('pointermove', e => { if (state.engaged && e.buttons === 0 && !controls.enableZoom) controls.enableZoom = true; });
+  /* on-screen navigation */
+  const zoomBy = k => {
+    poke(); fly = null;
+    const d = camera.position.clone().sub(controls.target);
+    const len = clamp(d.length() * k, controls.minDistance, controls.maxDistance);
+    flyTo({ pos: controls.target.clone().add(d.setLength(len)), target: controls.target.clone() }, .45);
+  };
+  const orbitBy = a => {
+    poke(); fly = null;
+    const d = camera.position.clone().sub(controls.target).applyAxisAngle(new V3(0, 1, 0), a);
+    flyTo({ pos: controls.target.clone().add(d), target: controls.target.clone() }, .45);
+  };
+  $('#nav-in').addEventListener('click', () => zoomBy(.7));
+  $('#nav-out').addEventListener('click', () => zoomBy(1.45));
+  $('#nav-left').addEventListener('click', () => orbitBy(-Math.PI / 6));
+  $('#nav-right').addEventListener('click', () => orbitBy(Math.PI / 6));
+  $('#nav-home').addEventListener('click', () => { poke(); overview(); });
 
   const veil = $('#veil');
   function setEngaged(on) {
