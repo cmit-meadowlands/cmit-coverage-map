@@ -1092,7 +1092,10 @@ function createApp(L) {
   let renderer;
   try { renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); }
   catch (e) { showError(); throw e; }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  /* ?pr= renders above screen density (up to 4x) so the map stays sharp when a host
+     such as the PowerPoint add-in scales the frame up during a slide show. */
+  const prParam = parseFloat(params.get('pr'));
+  renderer.setPixelRatio(prParam > 0 ? Math.min(prParam, 4) : Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = T.SRGBColorSpace;
   renderer.toneMapping = T.NoToneMapping;
   stage.appendChild(renderer.domElement);

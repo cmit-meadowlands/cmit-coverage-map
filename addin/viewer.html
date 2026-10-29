@@ -32,11 +32,26 @@
   const input = document.getElementById("url");
   const msg = document.getElementById("msg");
 
+  // Render the coverage map supersampled: PowerPoint scales the add-in up in the slide show,
+  // which otherwise stretches a low-resolution canvas and looks grainy.
+  function sharpen(url) {
+    try {
+      const u = new URL(url);
+      if (u.hostname === "cmit-meadowlands.github.io" && u.pathname.startsWith("/cmit-coverage-map") && !u.searchParams.has("pr")) {
+        const pr = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * 2));
+        u.searchParams.set("pr", String(Math.round(pr * 10) / 10));
+        return u.toString();
+      }
+    } catch (e) {}
+    return url;
+  }
+
   function show(url) {
     if (!/^https:\/\//i.test(url)) { msg.textContent = "Use an https:// address."; msg.style.display = "grid"; return; }
     msg.style.display = "none";
     input.value = url;
-    if (frame.src !== url) frame.src = url;
+    const src = sharpen(url);
+    if (frame.src !== src) frame.src = src;
   }
 
   // Edit mode = normal PowerPoint editing; read mode = slide show. Hide the URL bar in the show.
