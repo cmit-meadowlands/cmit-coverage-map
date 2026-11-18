@@ -52,7 +52,7 @@ const MAP = {
 
   /* Who-handles-it chips. `unit` is the CMIT Team object the chip lights up. */
   handlers: {
-    soc:    { label: "SOC",     unit: "soc" },
+    soc:    { label: "Security", unit: "soc" },
     remote: { label: "Remote",  unit: "remote" },
     onsite: { label: "On-site", unit: "truck" }
   },
@@ -93,7 +93,7 @@ const MAP = {
           tag: "Next-gen firewall, threat filtering, patching",
           model: "device", size: [1.0, 0.18, 0.25], at: [[-10.6, 2.0, -6.25]],
           summary: "Your firewall decides what is allowed in and out of the office network. We run it as a next-generation firewall (NGFW) that inspects traffic for threats and blocks known-bad sites. Firmware patches happen on a schedule, not whenever someone remembers.",
-          bullets: ["Next-generation firewall setup and rule management", "Threat, malware, and web filtering", "Firmware patching on a managed schedule", "Secure VPN (virtual private network) access for remote staff", "Logs reviewed 24/7 by the CMIT SOC"] },
+          bullets: ["Next-generation firewall setup and rule management", "Threat, malware, and web filtering", "Firmware patching on a managed schedule", "Secure VPN (virtual private network) access for remote staff", "Logs reviewed 24/7 by your CMIT team"] },
 
         { id: "switch", lead: 18, name: "Core switch + patch panel", link: "NET", handlers: ["remote", "onsite"],
           tag: "VLANs, port security, cable documentation",
@@ -107,21 +107,21 @@ const MAP = {
           summary: "The rack is the physical home of your most important equipment. We plan the layout, keep airflow and cooling in check, and label everything. The result is a closet that is safe to work in and easy to hand off.",
           bullets: ["Rack layout and cable management", "Cooling and temperature monitoring", "Clear labeling and as-built documentation", "Physical access recommendations"] },
 
-        { id: "server", name: "On-prem server", link: "MS", handlers: ["soc", "remote", "onsite"], regulated: true,
+        { id: "server", control: "Encrypted · logged", gap: "No audit log", name: "On-prem server", link: "MS", handlers: ["soc", "remote", "onsite"], regulated: true,
           tag: "24/7 monitoring, patching, lifecycle",
           model: "device", size: [1.0, 0.5, 0.3], at: [[-10.6, 0.95, -6.25]],
           summary: "If your business runs files, apps, or databases in the office, they live here. We monitor the server 24/7, patch it on a schedule, and plan its replacement before it becomes an emergency.",
           bullets: ["24/7 health and performance monitoring", "Scheduled operating system and application patching", "EDR (endpoint detection and response) protection", "Warranty and lifecycle tracking", "Migration planning when the cloud makes more sense"],
           compliance: "Servers that hold patient, client, or financial records fall under HIPAA (the Health Insurance Portability and Accountability Act), the FTC Safeguards Rule, or both. We put access controls, encryption, and audit logging in place and keep the documentation." },
 
-        { id: "nas", lead: 96, name: "NAS / file storage", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
+        { id: "nas", control: "Access by role", gap: "Open to everyone", lead: 96, name: "NAS / file storage", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
           tag: "Permissions, encryption, capacity alerts",
           model: "device", size: [0.32, 0.42, 0.42], at: [[-6.95, 0.8, -7.15]],
           summary: "A NAS (network-attached storage) is the shared drive everyone saves to. We set who can see what, encrypt the data, and alert you long before it fills up.",
           bullets: ["Folder permissions by role", "Encryption at rest", "Capacity and drive-health alerts", "Included in backup and restore testing"],
           compliance: "Shared drives are where sensitive files quietly pile up. Role-based permissions and encryption support HIPAA and FTC Safeguards Rule requirements for protecting stored records." },
 
-        { id: "backup", lead: 56, name: "Backup appliance", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
+        { id: "backup", control: "Restores tested", gap: "Never tested", lead: 56, name: "Backup appliance", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
           tag: "Local and offsite copies, tested restores",
           model: "device", size: [0.6, 0.22, 0.45], at: [[-7.9, 0.8, -7.15]],
           summary: "Backups only matter if they restore. This appliance keeps fast local copies of your servers and shared drives and sends a copy offsite. We test restores, so recovery is a plan, not a hope.",
@@ -144,12 +144,12 @@ const MAP = {
       bounds: [-6, -8, 12, 0],
       objects: [
         { id: "workstations", labelIndex: 0, name: "Desktop workstations", link: "MS", handlers: ["soc", "remote", "onsite"],
-          tag: "EDR + 24/7 SOC response",
+          tag: "EDR + 24/7 team response",
           model: "workstation", at: [[-3.6, 0, -6.2], [-0.4, 0, -6.2], [2.8, 0, -6.2], [-3.6, 0, -2.8], [2.8, 0, -2.8], [6.0, 0, -2.8]],
           summary: "Every desk computer gets the same protection and care, whether you have five or fifty. We run EDR (endpoint detection and response), keep Windows and your apps patched, and fix problems remotely, often before anyone notices.",
-          bullets: ["EDR protection watched by the CMIT SOC", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
+          bullets: ["EDR protection watched 24/7 by your CMIT team", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
 
-        { id: "laptops", labelIndex: 0, name: "Laptops (in office + remote)", link: "SEC", handlers: ["soc", "remote", "onsite"], regulated: true,
+        { id: "laptops", control: "Encrypted · MFA", gap: "Unencrypted", labelIndex: 0, name: "Laptops (in office + remote)", link: "SEC", handlers: ["soc", "remote", "onsite"], regulated: true,
           tag: "Encryption, MFA, secure remote access",
           model: "laptop", at: [[6.0, 0, -6.2], [-0.4, 0, -2.8]],
           summary: "Laptops leave the building, so they carry more risk. We encrypt the drive, require MFA (multi-factor authentication), and give staff secure remote access. A lost bag becomes an inconvenience, not a breach.",
@@ -282,7 +282,7 @@ const MAP = {
           summary: "The stuff nobody tracks. Smart thermostats, speakers, and plugs all join your Wi-Fi, and any one of them can be a way in. We find them, inventory them, and fence them off from your business data.",
           bullets: ["Discovery and inventory of connected devices", "Isolation on a dedicated IoT (Internet of Things) network", "Default password and firmware checks"] },
 
-        { id: "pos", name: "POS / payment terminal", link: "CMP", handlers: ["remote", "onsite", "soc"], regulated: true,
+        { id: "pos", control: "PCI segmented", gap: "On the open network", name: "POS / payment terminal", link: "CMP", handlers: ["remote", "onsite", "soc"], regulated: true,
           tag: "PCI-aware segmentation",
           model: "pos", at: [[5.6, 1.05, 3.1, 180]],
           summary: "If you take cards, your POS (point of sale) terminal handles your most sensitive data. We segment it from everything else to keep it inside a smaller, cleaner scope for PCI DSS (Payment Card Industry Data Security Standard).",
@@ -297,11 +297,11 @@ const MAP = {
       name: "Cloud",
       blurb: "The services your business runs on, wherever your team works.",
       objects: [
-        { id: "email", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
+        { id: "email", control: "Encrypted mail", gap: "No encryption", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
           tag: "Phishing filtering, impersonation defense",
           model: "tile", at: [[-9.2, 9.68, -23.1]],
           summary: "Email is where most attacks start. We filter spam and phishing before it reaches the inbox, block impersonation of you and your vendors, and turn on protections that Microsoft 365 leaves off by default.",
-          bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by the CMIT SOC"],
+          bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by your CMIT team"],
           compliance: "Email is a common place for patient and customer data to leak. Message encryption and data loss prevention rules support HIPAA and FTC Safeguards Rule obligations." },
 
         { id: "identity", name: "Identity & MFA", link: "SEC", handlers: ["soc", "remote"], icon: "lock",
@@ -310,7 +310,7 @@ const MAP = {
           summary: "Your login is the new front door. We set up single sign-on (one login for every app), conditional access that checks where and how people sign in, and MFA (multi-factor authentication) everywhere.",
           bullets: ["Single sign-on across your apps", "Conditional access by device and location", "MFA for every user", "Same-day onboarding and offboarding"] },
 
-        { id: "files", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
+        { id: "files", control: "Retention set", gap: "Shared by link", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
           tag: "Permissions, retention, ransomware rollback",
           model: "tile", at: [[-0.8, 9.68, -23.1]],
           summary: "Your files live in Microsoft 365 now, which makes sharing easy, sometimes too easy. We set permissions, retention, and version history, so one bad click or a ransomware event can be rolled back.",
@@ -329,14 +329,14 @@ const MAP = {
           summary: "Your domain is the root of your email and your website. We lock it against hijacking, keep SSL certificates valid, and set up SPF, DKIM, and DMARC (email authentication records) so nobody can send email pretending to be you.",
           bullets: ["Domain registrar lock and renewal tracking", "SSL certificate monitoring", "SPF, DKIM, and DMARC setup", "DNS (domain name system) management"] },
 
-        { id: "lob", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
+        { id: "lob", control: "Access reviewed", gap: "Ex-staff still in", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
           tag: "Vendor coordination, access reviews",
           model: "tile", at: [[-0.8, 9.68, -20.0]],
           summary: "This is the software that runs your business: an EHR (electronic health record), accounting, or CRM (customer relationship management) system. We coordinate with the vendor, handle updates, and review who has access.",
           bullets: ["Vendor coordination and escalation", "Updates and integration support", "Regular access reviews", "Onboarding and offboarding in every app"],
           compliance: "These apps hold your most regulated data. Access reviews and audit logs support HIPAA, the FTC Safeguards Rule, and your client contract requirements." },
 
-        { id: "cloudbackup", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
+        { id: "cloudbackup", control: "Immutable copy", gap: "No offsite copy", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
           tag: "Offsite immutable copies",
           model: "tile", at: [[-9.2, 9.68, -16.9]],
           summary: "Microsoft keeps 365 running, but recovering your deleted or encrypted data is your job. We back up email, OneDrive, SharePoint, and Teams, plus your servers, to immutable offsite storage that can't be altered or deleted.",
@@ -364,10 +364,10 @@ const MAP = {
       blurb: "The people behind the coverage: watching, fixing, and showing up.",
       labelAt: [21, 4.6, -0.6],
       objects: [
-        { id: "soc", name: "Security Operations Center", link: "MDR", handlers: ["soc"], hotkey: "6",
+        { id: "soc", name: "24/7 Security Team", link: "MDR", handlers: ["soc"], hotkey: "6",
           tag: "24/7 threat detection and response",
           model: "soc", at: [[21, 0.12, -5.5]],
-          summary: "Our SOC (security operations center) watches your environment 24/7/365. It is the MDR (managed detection and response) team that triages every alert, shuts down real threats, and tells you what happened in plain English.",
+          summary: "Your CMIT security team watches your environment 24/7/365 with MDR (managed detection and response). They triage every alert, shut down real threats, and tell you what happened in plain English.",
           bullets: ["24/7 threat detection and response", "Alert triage, so you are never drowning in noise", "Endpoint, email, and identity monitoring", "Incident reports written for owners"] },
 
         { id: "remote", name: "Remote Support", link: "SUP", handlers: ["remote"], hotkey: "7",
@@ -438,14 +438,15 @@ const MAP = {
         text: "Help desk ticket fixed remotely in minutes.",
         exposed: "Help desk ticket opened. Still waiting on IT." },
       { at: "11:45", type: "edr", target: "laptops", device: 0, ask: "Fake PDF tool running", dur: 5.5,
-        text: "A fake PDF tool starts running. EDR stops it and the SOC isolates the laptop.",
+        text: "A fake PDF tool starts running. EDR traps it and your CMIT team isolates the laptop.",
         exposed: "Antivirus logged an alert. Nobody read it. The attacker stays for months." },
 
-      { at: "13:00", type: "section", zone: "conference", dur: 6,
+      { at: "12:50", type: "section", zone: "conference", dur: 3,
         items: ["av", "tv", "aps", "guestwifi"],
-        tag: { on: "guestwifi", text: "Guest network only", exposed: "Same network as your files" },
-        text: "Conference & Common Area. A guest's laptop gets internet, never your files.",
-        exposed: "Conference & Common Area. Guests share the network with your files and printers." },
+        text: "Conference & Common Area. Meetings, Wi-Fi and the screens your guests see." },
+      { at: "13:30", type: "guest", dur: 6,
+        text: "A guest's laptop gets the internet, never your files.",
+        exposed: "A guest's laptop joins the same network as your files and printers." },
 
       { at: "14:30", type: "section", zone: "building", dur: 3.5,
         items: ["cameras", "badge", "intercom", "alarm", "iot", "pos"],
@@ -457,18 +458,16 @@ const MAP = {
       { at: "18:30", type: "section", zone: "cloud", dur: 3.5,
         items: ["email", "identity", "files", "teams", "lob", "cloudbackup", "ai"],
         text: "Cloud. The services your business runs on, wherever your team works." },
-      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", dur: 5,
+      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", mfa: true, dur: 6,
         text: "Sign-in from overseas stopped by MFA and conditional access.",
         exposed: "Sign-in from overseas succeeded. Shared files opened." },
-      { at: "21:00", type: "section", zone: "cloud", dur: 4,
-        items: ["ai", "lob"],
-        tag: { on: "ai", text: "Data put to work", exposed: "Data scattered" },
+      { at: "21:00", type: "ai", dur: 6,
         text: "Your own data, connected and put to work, with guardrails.",
         exposed: "Data spread across apps nobody connected." },
 
-      { at: "23:00", type: "section", zone: "team", dur: 3.5,
-        items: ["soc", "remote", "truck"],
-        text: "CMIT Team. The people behind it: watching, fixing, showing up." },
+      { at: "23:00", type: "team", dur: 5.5,
+        text: "Your CMIT team. Watching every device overnight, fixing and showing up.",
+        exposedAs: { type: "section", zone: null, items: [], dur: 3, text: "Overnight. Nobody is watching." } },
       { at: "02:00", type: "patch", dur: 4.5,
         text: "Updates installed on {n} devices while you slept.",
         exposed: "{n} devices still unpatched." },
@@ -476,23 +475,23 @@ const MAP = {
         text: "Nightly backup completed and verified.",
         exposed: "Backup didn't run. Nobody noticed." },
 
-      { at: "06:00", type: "section", dur: 6, items: "regulated", compliance: true,
-        text: "Every action left a record for your insurer, auditor or buyer.",
-        exposed: "No records. Nothing to show an insurer, auditor or buyer." }
+      { at: "05:30", type: "comply", dur: 7.5,
+        text: "We help your business stay compliant. HIPAA, FTC Safeguards and PCI DSS controls, kept in place every day.",
+        exposed: "Nobody is checking. Compliance gaps pile up until an audit or a breach finds them." }
     ],
     recap: {
       protected: {
         preheader: "Simulated day with CMIT",
         title: "Here's what your technology team handled today",
         body: "Your staff worked the whole day without noticing any of it. That's the point.",
-        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["access", "Access removed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
+        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["controls", "Compliance controls in place"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
         alt: "See the same day without CMIT"
       },
       exposed: {
         preheader: "Simulated day without CMIT",
         title: "The same day without a technology team",
         body: "Same office, same day, same threats. This time nobody was watching.",
-        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["open", "Former employee accounts left open"], ["unpatched", "Devices left unpatched"], ["missed", "Backups that didn't run"]],
+        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["gaps", "Compliance gaps"], ["unpatched", "Devices left unpatched"], ["open", "Former employee accounts left open"]],
         alt: "Replay the day with CMIT"
       }
     }
@@ -505,11 +504,11 @@ const MAP = {
 
   /* Threat toasts, rotated in order. Target is "firewall" or "email". */
   threats: [
-    { target: "email",    text: "Phishing email blocked by the CMIT SOC." },
+    { target: "email",    text: "Phishing email blocked by your CMIT team." },
     { target: "firewall", text: "Ransomware download stopped at the firewall. Nobody had to unplug anything." },
     { target: "email",    text: "Credential-stuffing attempt locked out. Those passwords were never going to work." },
     { target: "email",    text: "Spoofed invoice quarantined. Accounts payable never saw it." },
-    { target: "firewall", text: "Sign-in from overseas blocked and flagged by the CMIT SOC." }
+    { target: "firewall", text: "Sign-in from overseas blocked and flagged by your CMIT team." }
   ],
 
   /* Static furniture and building shell (ghosted x-ray glass). */
@@ -1828,8 +1827,10 @@ function createApp(L) {
         const curve = arc(A.anchors[0], B.anchors[0]);
         const base = f.width ? .3 : .5;
         const mat = tubeMat(hdr(C[f.color], .9), base, reduced ? 0 : 3);
-        flowGroup.add(new T.Mesh(new T.TubeGeometry(curve, 48, f.width || .03, 5, false), mat));
-        links.push({ f, a, b, curve, len: curve.getLength(), mat, base, acc: Math.random(), pcol: hdr(C[f.color], FLOWK[f.color] || 1.5), phase: Math.random() * 6, dim: false });
+        const mesh = new T.Mesh(new T.TubeGeometry(curve, 48, f.width || .03, 5, false), mat);
+        flowGroup.add(mesh);
+        const team = [A, B].some(o => o.zone.group === 'team');
+        links.push({ f, a, b, curve, mesh, team, len: curve.getLength(), mat, base, acc: Math.random(), pcol: hdr(C[f.color], FLOWK[f.color] || 1.5), phase: Math.random() * 6, dim: false });
       }
     }
     refreshFlowDims();
@@ -1843,6 +1844,7 @@ function createApp(L) {
   }
   function updatePackets(dt) {
     for (const l of links) {
+      if (l.team && live.running && exposed()) continue;
       let rate = l.f.rate;
       if (l.f.burst) rate = Math.sin(time * 1.3 + l.phase) > .35 ? rate : 0;
       l.acc += rate * dt;
@@ -1935,6 +1937,7 @@ function createApp(L) {
       scene.add(zap); zapT = 0; zapMat.uniforms.uOpacity.value = 1;
     }
     if (tgt) tgt.pulse = 1;
+    if (tgt && tgt.zone.group === 'office') domeFlash();
     socPulse = 1;
     toast(v.text);
   }
@@ -1962,6 +1965,16 @@ function createApp(L) {
     }
   }
   function updateFx(dt) {
+    if (domeT >= 0) {
+      domeT += dt; const s = domeT / 1.5;
+      if (s >= 1) { domeT = -1; dome.visible = false; }
+      else { const a = s < .12 ? s / .12 : 1 - (s - .12) / .88; domeFill.opacity = .13 * a; domeLineMat.opacity = .85 * a; dome.scale.set(15 + s, 7 + s * .5, 11 + s); }
+    }
+    if (sweepT >= 0) {
+      sweepT += dt; const s = sweepT / 3.2;
+      if (s >= 1) { sweepT = -1; sweep.visible = false; }
+      else { sweep.visible = true; sweep.position.set(-12.8 + 25.6 * s, 1.8, 0); const a = Math.sin(Math.PI * s); sweepMat.opacity = .16 * a; sweepEdge.material.opacity = a; }
+    }
     if (zapT >= 0) {
       zapT += dt;
       const s = zapT / .8;
@@ -2015,13 +2028,14 @@ function createApp(L) {
     o.alert = v;
     o.mats.screen.color.copy(v ? C.red : BB).multiplyScalar(v ? .6 : .5);
   }
-  function cage(id, i, bad) {
+  function cage(id, i, bad, snap) {
     const o = OBJ(id); if (!o) return;
     const b = (o.iboxes[i] || o.box).clone().expandByScalar(.12);
     const s = b.getSize(new V3());
     const m = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(s.x, s.y, s.z)),
       new T.LineBasicMaterial({ color: hdr(bad ? C.red : BB, 2.6), toneMapped: false, transparent: true }));
     b.getCenter(m.position); scene.add(m); live.cages.push(m);
+    if (snap && !reduced) { m.userData.snap = 1; m.scale.setScalar(2.5); }
     return m;
   }
   function tag(pos, text, dur = 2.8, bad = false) {
@@ -2063,10 +2077,33 @@ function createApp(L) {
   const staffShow = on => { if (staff) staff.group.visible = on; };
   function direct(list, k = .9) {
     if (!live.running || state.sel || performance.now() < live.camHold) return;
-    flyTo(viewForBox(boxOf(list), 10, k), 1.1);
+    flyTo(viewForBox(boxOf(list), 15, Math.max(k, 1)), 1.1);
   }
 
   /* event handlers: each plays both versions of the story */
+  /* Perimeter dome: flashes when an attack is stopped at the office's outer wall. */
+  renderer.localClippingEnabled = true;
+  const domeClip = [new T.Plane(new V3(0, 1, 0), .02)];
+  const domeGeo = new T.IcosahedronGeometry(1, 2);
+  const domeFill = new T.MeshBasicMaterial({ color: hdr(BB, 1.2), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending, clippingPlanes: domeClip });
+  const domeLineMat = new T.LineBasicMaterial({ color: hdr(BB, 2.6), toneMapped: false, transparent: true, opacity: 0, clippingPlanes: domeClip });
+  const dome = new T.Mesh(domeGeo, domeFill);
+  dome.add(new T.LineSegments(new T.EdgesGeometry(domeGeo), domeLineMat));
+  dome.scale.set(15, 7, 11); dome.visible = false; scene.add(dome);
+  let domeT = -1;
+  function domeFlash() { domeT = 0; dome.visible = true; }
+  /* Monitoring sweep: a scan line that passes over every device. */
+  const sweepMat = new T.MeshBasicMaterial({ color: hdr(BB, 1.4), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending });
+  const sweep = new T.Mesh(new T.PlaneGeometry(16.6, 3.6), sweepMat);
+  sweep.rotation.y = Math.PI / 2; sweep.visible = false; scene.add(sweep);
+  const sweepEdge = new T.LineSegments(new T.EdgesGeometry(sweep.geometry), new T.LineBasicMaterial({ color: hdr(BB, 2.6), toneMapped: false, transparent: true, opacity: 0 }));
+  sweep.add(sweepEdge);
+  let sweepT = -1;
+  const TEAM_IDS = ['soc', 'remote', 'truck'];
+  const officeObjs = () => [...objects.values()].filter(o => o.zone.group === 'office' && o.id !== 'staff' && o.id !== 'rack');
+  const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
+  const frameOn = (list, k = 1, minD = 14) => { if (!state.sel && performance.now() >= live.camHold) flyTo(viewForBox(boxOf(list), minD, k), 1.2); };
+
   const HANDLERS = {
     /* A section beat: fly to a zone, pulse its items, caption it. Optional tag on one item. */
     section(e) {
@@ -2086,17 +2123,77 @@ function createApp(L) {
         tag(anchorOf(e.tag.on), t, Math.max(2, (e.dur || 4) - 1.4), exposed() && !!e.tag.exposed);
       });
     },
-    /* Malware runs on a device. With CMIT: EDR stops it and the SOC isolates it. */
+    /* Malware runs on a device. With CMIT, EDR traps it and your team isolates the device. */
     edr(e) {
       const id = e.target || 'laptops', i = e.device || 0, P = anchorOf(id, i);
-      direct([`${id}#${i}`], .55);
-      tag(P, e.ask || 'Fake PDF tool running', 2.2, true);
+      frameOn([`${id}#${i}`, 'workstations', 'voip'], 1);
+      tag(P, e.ask || 'Fake PDF tool running', 2.4, true);
+      ring(P, 0, 'red');
       if (!exposed()) {
-        after(1.3, () => { socZap(P); const c = cage(id, i, false); after(3.5, () => { if (c) c.visible = false; }); });
-        after(3, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
+        after(.6, () => { for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; burst(P, P.clone().add(new V3(Math.cos(a) * 1.5, .35, Math.sin(a) * 1.5)), 'red', 2, 3.5, .18); } });
+        after(1.2, () => { socZap(P); const c = cage(id, i, false, true); ring(P, 0); ring(P, .2); after(4, () => { if (c) c.visible = false; }); });
+        after(3.1, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
       } else {
-        after(2.3, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
+        const hits = [['workstations', 0], ['workstations', 2], ['workstations', 4], ['server', 0], ['nas', 0]];
+        hits.forEach(([t, j], k) => after(.6 + k * .35, () => { burst(P, anchorOf(t, j), 'red', 5, 7); after(.9, () => cage(t, j, true)); }));
+        after(2.4, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
       }
+    },
+    /* Guest Wi-Fi: internet yes, business files no. */
+    guest(e) {
+      live.labelZone = 'conference';
+      frameOn(['guestwifi', 'nas', 'ont', 'tv'], .95);
+      const G = anchorOf('guestwifi'), N = anchorOf('nas');
+      tag(G, 'Guest laptop joins', 2.2);
+      after(.6, () => burst(G, anchorOf('ont'), 'paper', 12, 7, .12));
+      after(1.3, () => tag(anchorOf('ont'), 'Internet: yes', 2.4));
+      if (!exposed()) {
+        const mid = arc(G, N).getPointAt(.5);
+        after(2.4, () => burst(G, mid, 'bright-blue', 6, 7, .08));
+        after(3.2, () => { ring(mid, 0); ring(mid, .2); ring(mid, .4); tag(mid, 'Your files: no', 2.8); });
+      } else {
+        after(2.4, () => burst(G, N, 'red', 8, 7, .08));
+        after(3.6, () => { setAlert(OBJ('nas'), 1); OBJ('nas').pulse = 1; tag(N, 'Guest reached your files', 99, true); });
+      }
+    },
+    /* AI: your own data, connected and put to work, with guardrails. */
+    ai(e) {
+      live.labelZone = 'cloud';
+      frameOn(['email', 'files', 'lob', 'ai', 'teams', 'identity'], .9);
+      const A = anchorOf('ai');
+      if (!exposed()) {
+        ['email', 'files', 'lob', 'teams', 'phonesys'].forEach((id, k) => after(.3 + k * .22, () => burst(anchorOf(id), A, 'bright-blue', 6, 7, .07)));
+        after(1.9, () => { ring(A, 0); ring(A, .2); ring(A, .4); OBJ('ai').pulse = 1; tag(A, 'Guardrails on', 2.6); });
+        after(2.6, () => [0, 2, 4, 5].forEach((i, k) => after(k * .2, () => burst(A, anchorOf('workstations', i), 'paper', 6, 9, .07))));
+      } else {
+        const ids = ['email', 'files', 'lob', 'teams', 'phonesys', 'web', 'identity'];
+        for (let k = 0; k < 9; k++) after(k * .28, () => { const x = pickOne(ids); let y = pickOne(ids); if (y === x) y = 'ai'; burst(anchorOf(x), anchorOf(y), 'slate', 3, 4); });
+        after(1.8, () => tag(A, 'Data scattered', 3.5, true));
+      }
+    },
+    /* The team at work overnight: a monitoring sweep over every device. */
+    team(e) {
+      live.labelZone = 'team';
+      if (!state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.2);
+      TEAM_IDS.forEach((id, k) => after(.3 + k * .3, () => { const o = OBJ(id); if (o) { o.pulse = 1; ring(anchorOf(id), 0); } }));
+      after(1.1, () => {
+        sweepT = 0;
+        for (const o of officeObjs()) after(Math.max(0, (o.anchors[0].x + 12.8) / 25.6 * 3.2), () => { o.pulse = 1; });
+        socZap(new V3(0, 3.2, 0));
+      });
+      after(4.3, () => tag(anchorOf('soc'), 'Watching 24/7', 2.4));
+    },
+    /* Compliance: the controls your regulations require, checked one by one. */
+    comply(e) {
+      live.labelZone = '__none';
+      if (!state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.2);
+      if (!state.comp) toggleComp(true);
+      const regs = [...objects.values()].filter(o => o.def.regulated);
+      regs.forEach((o, k) => after(.9 + k * .45, () => {
+        o.pulse = 1; ring(o.anchors[0], 0, exposed() ? 'red' : 'bright-blue');
+        if (!exposed()) { tag(o.anchors[0], o.def.control || 'Control in place', 99); bump('controls'); }
+        else { tag(o.anchors[0], o.def.gap || 'Gap found', 99, true); setAlert(o, 1); bump('gaps'); }
+      }));
     },
     open() { staffShow(true); },
     close(e) {
@@ -2106,18 +2203,25 @@ function createApp(L) {
     },
     helpdesk(e) {
       const who = `staff#${e.staff}`, pc = `workstations#${e.device}`;
-      direct([who, pc, 'remote'], .8);
+      frameOn([who, pc, 'workstations'], 1);
       live.bob = { i: e.staff, home: homeOf(e.staff) };
       tag(anchorOf('staff', e.staff), e.ask, 3);
       if (!exposed()) {
-        after(1.4, () => burst(anchorOf('remote'), anchorOf('workstations', e.device), 'orange', 14, 8, .08));
-        after(3.4, () => { tag(anchorOf('workstations', e.device), 'Fixed remotely', 2.6); live.bob = null; setInst(staff, e.staff, homeOf(e.staff)); bump('fixed'); OBJ('remote').pulse = 1; });
+        const R = anchorOf('remote'), D = anchorOf('workstations', e.device);
+        after(1.2, () => { const m = beamLine(R, D, 'orange', .9); after(3, () => { m.userData.fade = 1; }); ring(R, 0, 'orange'); OBJ('remote').pulse = 1; tag(R, 'Remote session', 2); });
+        after(1.5, () => burst(R, D, 'orange', 16, 9, .07));
+        after(2.6, () => { ring(D, 0, 'orange'); ring(D, .25); });
+        after(3.4, () => { tag(D, 'Resolved remotely', 2.6); live.bob = null; setInst(staff, e.staff, homeOf(e.staff)); bump('fixed'); });
       } else {
         after(3.2, () => tag(anchorOf('staff', e.staff), 'Still waiting on IT', 4, true));
       }
     },
     threat(e) {
-      direct([e.target], .55);
+      frameOn(e.mfa ? [e.target, 'files', 'email'] : [e.target], 1, 16);
+      if (e.mfa && !exposed()) {
+        after(.7, () => burst(anchorOf(e.target), anchorOf('mobile'), 'bright-blue', 6, 9, .08));
+        after(1.8, () => { ring(anchorOf('mobile'), 0); tag(anchorOf('mobile'), 'Sign-in request: denied', 3); });
+      }
       launchThreat({ target: e.target, origin: e.origin, text: lines(e) }, {
         blocked: !exposed(),
         onDone: () => {
@@ -2172,7 +2276,7 @@ function createApp(L) {
           bm.forEach(m => { m.userData.fade = 1; });
           ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
           tag(anchorOf('badge'), 'Access removed', 3);
-          bump('access');
+          bump('fixed');
         });
       } else {
         after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
@@ -2186,7 +2290,7 @@ function createApp(L) {
         after(1.2, () => burst(anchorOf('backup'), anchorOf('cloudbackup'), 'paper', 12, 8, .07));
         after(3, () => { tag(anchorOf('cloudbackup'), 'Backup verified', 2.6); bump('backups'); });
       } else {
-        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('missed'); });
+        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('gaps'); });
       }
     },
     patch() {
@@ -2241,7 +2345,14 @@ function createApp(L) {
     for (const o of objects.values()) setAlert(o, 0);
     if (staff) { staff.def.at.forEach((_, i) => setInst(staff, i, homeOf(i))); staffShow(true); }
     live.bob = live.walk = null; live.downAt = null;
+    setTeamVisible(true);
     threat = null; threatGroup.visible = false; packets.length = 0;
+  }
+  /* Without CMIT there is no team: hide the team buildings and every flow that touches them. */
+  function setTeamVisible(on) {
+    for (const id of TEAM_IDS) { const o = OBJ(id); if (o) o.group.visible = on; }
+    for (const l of links) if (l.team) l.mesh.visible = on;
+    live.noTeam = !on;
   }
   function liveStart(mode = 'protected') {
     clearWorld();
@@ -2249,6 +2360,7 @@ function createApp(L) {
     if (live.compWas == null) live.compWas = state.comp;
     if (state.comp !== live.compWas) toggleComp(live.compWas);
     staffShow(false);
+    setTeamVisible(mode !== 'exposed');
     recap.hidden = true; hud.hidden = false; appEl.classList.add('live-on'); appEl.classList.remove('recap-on');
     $('#hud-mode').textContent = mode === 'exposed' ? 'Without CMIT' : 'With CMIT';
     hud.classList.toggle('exposed', mode === 'exposed');
@@ -2310,6 +2422,10 @@ function createApp(L) {
       if (t.life <= 0) { scene.remove(t.o); live.tags.splice(i, 1); }
       else if (t.life < .4) t.el.style.opacity = t.life / .4;
     }
+    for (const m of live.cages) if (m.userData.snap > 0) {
+      m.userData.snap = Math.max(0, m.userData.snap - dt * 3.2);
+      m.scale.setScalar(1 + m.userData.snap * 1.5);
+    }
     for (const r of rings) {
       if (!r.on) continue;
       r.t += dt; if (r.t < 0) continue;
@@ -2345,7 +2461,8 @@ function createApp(L) {
     const closeT = (18 * 60 - DAY0 + 1440) % 1440;
     if (exposed() && live.downAt != null && !live.offCounted && live.t >= closeT) { live.offCounted = true; bump('offline', Math.round((closeT - live.downAt) / 6) / 10); }
     while (live.busy <= 0 && live.i < EVENTS.length && live.t >= EVENTS[live.i].m) {
-      const e = EVENTS[live.i++];
+      let e = EVENTS[live.i++];
+      if (exposed() && e.exposedAs) e = { ...e, ...e.exposedAs };
       live.active = e; live.busy = e.dur || 4.5;
       toast(lines(e));
       if (HANDLERS[e.type]) HANDLERS[e.type](e);
@@ -2433,7 +2550,7 @@ function createApp(L) {
       if (o.badge) { const bv = state.comp && !show; if (o.badge.visible !== bv) o.badge.visible = bv; }
     }
     const zs = !state.zone && !state.sel && !(live.running && live.labelZone);
-    for (const Z of zones.values()) if (Z.label.visible !== zs) Z.label.visible = zs;
+    for (const Z of zones.values()) { const v = zs && !(live.noTeam && Z.def.group === 'team'); if (Z.label.visible !== v) Z.label.visible = v; }
     labelR.domElement.classList.toggle('comp', state.comp);
   }
 
