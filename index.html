@@ -144,7 +144,7 @@ const MAP = {
       bounds: [-6, -8, 12, 0],
       objects: [
         { id: "workstations", labelIndex: 0, name: "Desktop workstations", link: "MS", handlers: ["soc", "remote", "onsite"],
-          tag: "EDR, patching, remote support",
+          tag: "EDR + 24/7 SOC response",
           model: "workstation", at: [[-3.6, 0, -6.2], [-0.4, 0, -6.2], [2.8, 0, -6.2], [-3.6, 0, -2.8], [2.8, 0, -2.8], [6.0, 0, -2.8]],
           summary: "Every desk computer gets the same protection and care, whether you have five or fifty. We run EDR (endpoint detection and response), keep Windows and your apps patched, and fix problems remotely, often before anyone notices.",
           bullets: ["EDR protection watched by the CMIT SOC", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
@@ -414,59 +414,85 @@ const MAP = {
      ransomware, restore, offboard, backup, patch. */
   liveView: {
     dayStart: "07:00",
-    minutesPerSecond: 22,        /* clock speed between events */
-    eventMinutesPerSecond: 1.5,  /* clock speed while an event plays */
+    minutesPerSecond: 60,        /* clock speed between beats */
+    eventMinutesPerSecond: 1.5,  /* clock speed while a beat plays */
     note: "Simulated day. Every number comes from this animation, not from client data.",
+    /* A tour of the six sections, in clock order. `section` beats fly to a zone
+       (none = whole map), pulse `items` and caption them; `tag` labels one item;
+       `compliance: true` turns the Compliance lens on. No kind of event repeats. */
     events: [
-      { at: "07:30", type: "open", dur: 2,
-        text: "7:30 AM. Your team logs in.", exposed: "7:30 AM. Your team logs in." },
-      { at: "08:45", type: "helpdesk", staff: 1, device: 1, ask: "Shared drive won't open",
-        text: "Help desk ticket fixed remotely. Back to work in minutes.",
-        exposed: "Help desk ticket opened. Nobody is watching the queue." },
-      { at: "10:15", type: "threat", target: "email", origin: 0, victim: 2, hit: "Password stolen",
-        text: "Phishing email blocked by the CMIT SOC.",
-        exposed: "Phishing email delivered. Someone typed their password into a fake login page." },
-      { at: "11:40", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened",
-        text: "Sign-in from overseas stopped by MFA.",
-        exposed: "Sign-in from overseas succeeded. Shared files were opened." },
-      { at: "13:20", type: "ransomware", target: "firewall", origin: 1, victim: 3, dur: 7,
-        text: "Ransomware download stopped at the firewall. Nobody had to unplug anything.",
-        exposed: "Ransomware got in. Computers, the server, and the backups are encrypted." },
-      { at: "15:05", type: "restore",
-        text: "Deleted folder restored from backup.",
-        exposed: "Deleted folder is gone. There is no working backup to restore from." },
-      { at: "16:50", type: "offboard", staff: 5, dur: 5.5,
-        text: "Employee's last day. Access removed from every app and the front door.",
-        exposed: "Employee's last day. Their accounts and badge still work." },
-      { at: "18:00", type: "close", dur: 2,
-        text: "6:00 PM. The office closes. We keep watching.",
-        exposed: "6:00 PM. The office closes. Nobody is watching." },
-      { at: "20:30", type: "threat", target: "firewall", origin: 4, hit: "Way in found",
-        text: "Port scan blocked and logged by the CMIT SOC.",
-        exposed: "Port scan found an open door on the firewall." },
-      { at: "23:30", type: "backup",
-        text: "Nightly backup completed and verified.",
-        exposed: "Nightly backup didn't run. Nobody noticed." },
-      { at: "02:00", type: "patch", dur: 5,
+      { at: "07:05", type: "section", dur: 3,
+        text: "One team covers everything your business runs on." },
+
+      { at: "08:00", type: "section", zone: "closet", dur: 4,
+        items: ["ont", "firewall", "switch", "server", "nas", "backup", "ups"],
+        text: "Network & Server Closet. Where the internet enters and the business data lives." },
+      { at: "09:10", type: "ransomware", target: "firewall", origin: 1, victim: 3, dur: 8,
+        text: "Ransomware download stopped at the firewall.",
+        exposed: "Ransomware got in. Computers, server and backups encrypted. Office offline." },
+
+      { at: "10:00", type: "section", zone: "workspace", dur: 3.5,
+        items: ["workstations", "laptops", "mobile", "printers", "staff"],
+        text: "Workspace. Every device your team touches, plus the team." },
+      { at: "10:30", type: "helpdesk", staff: 1, device: 1, ask: "Shared drive won't open", dur: 5,
+        text: "Help desk ticket fixed remotely in minutes.",
+        exposed: "Help desk ticket opened. Still waiting on IT." },
+      { at: "11:45", type: "edr", target: "laptops", device: 0, ask: "Fake PDF tool running", dur: 5.5,
+        text: "A fake PDF tool starts running. EDR stops it and the SOC isolates the laptop.",
+        exposed: "Antivirus logged an alert. Nobody read it. The attacker stays for months." },
+
+      { at: "13:00", type: "section", zone: "conference", dur: 6,
+        items: ["av", "tv", "aps", "guestwifi"],
+        tag: { on: "guestwifi", text: "Guest network only", exposed: "Same network as your files" },
+        text: "Conference & Common Area. A guest's laptop gets internet, never your files.",
+        exposed: "Conference & Common Area. Guests share the network with your files and printers." },
+
+      { at: "14:30", type: "section", zone: "building", dur: 3.5,
+        items: ["cameras", "badge", "intercom", "alarm", "iot", "pos"],
+        text: "Building Systems. Doors, cameras, payments, and the devices nobody tracks." },
+      { at: "16:50", type: "offboard", staff: 5, dur: 7,
+        text: "Last day: access removed from every app and the front door.",
+        exposed: "Last day. Their accounts and badge still work." },
+
+      { at: "18:30", type: "section", zone: "cloud", dur: 3.5,
+        items: ["email", "identity", "files", "teams", "lob", "cloudbackup", "ai"],
+        text: "Cloud. The services your business runs on, wherever your team works." },
+      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", dur: 5,
+        text: "Sign-in from overseas stopped by MFA and conditional access.",
+        exposed: "Sign-in from overseas succeeded. Shared files opened." },
+      { at: "21:00", type: "section", zone: "cloud", dur: 4,
+        items: ["ai", "lob"],
+        tag: { on: "ai", text: "Data put to work", exposed: "Data scattered" },
+        text: "Your own data, connected and put to work, with guardrails.",
+        exposed: "Data spread across apps nobody connected." },
+
+      { at: "23:00", type: "section", zone: "team", dur: 3.5,
+        items: ["soc", "remote", "truck"],
+        text: "CMIT Team. The people behind it: watching, fixing, showing up." },
+      { at: "02:00", type: "patch", dur: 4.5,
         text: "Updates installed on {n} devices while you slept.",
-        exposed: "{n} devices are still waiting on updates." },
-      { at: "03:40", type: "threat", target: "identity", origin: 3, spread: "email", hit: "Old account used",
-        text: "Former employee's sign-in rejected. That account no longer exists.",
-        exposed: "Former employee's account used to sign in overnight." }
+        exposed: "{n} devices still unpatched." },
+      { at: "03:30", type: "backup", dur: 4,
+        text: "Nightly backup completed and verified.",
+        exposed: "Backup didn't run. Nobody noticed." },
+
+      { at: "06:00", type: "section", dur: 6, items: "regulated", compliance: true,
+        text: "Every action left a record for your insurer, auditor or buyer.",
+        exposed: "No records. Nothing to show an insurer, auditor or buyer." }
     ],
     recap: {
       protected: {
         preheader: "Simulated day with CMIT",
         title: "Here's what your technology team handled today",
         body: "Your staff worked the whole day without noticing any of it. That's the point.",
-        stats: [["blocked", "Threats blocked"], ["fixed", "Problems fixed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
+        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["access", "Access removed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
         alt: "See the same day without CMIT"
       },
       exposed: {
         preheader: "Simulated day without CMIT",
         title: "The same day without a technology team",
         body: "Same office, same day, same threats. This time nobody was watching.",
-        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["unpatched", "Devices left unpatched"], ["open", "Former employee accounts left open"]],
+        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["open", "Former employee accounts left open"], ["unpatched", "Devices left unpatched"], ["missed", "Backups that didn't run"]],
         alt: "Replay the day with CMIT"
       }
     }
@@ -794,20 +820,23 @@ kbd{font:500 10px/1 var(--font);border:1px solid rgba(var(--paper-rgb),.35);bord
 .hud-stats span{font-size:12px;line-height:1.35}
 .hud-note{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
 #recap{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--g);background:rgba(var(--navy-rgb),.55)}
-#recap .card{width:min(560px,100%);max-height:100%;overflow:auto}
+#recap .card{width:min(660px,100%);max-height:100%;overflow:auto}
 #recap .inner{padding:16px 28px 18px}
 #recap h2{font-size:30px}
 .recap-on #cta{display:none}
+.live-on #legend{display:none}
+.recap-on #nav{display:none}
 .recap-top{display:flex;align-items:center;gap:10px}
 .recap-top .pre{flex:1;margin:0}
 #recap h2{margin-top:10px}
-.recap-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.recap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}
+@media (max-width:639px){.recap-stats{grid-template-columns:1fr 1fr}}
 .recap-stats div{border:1px solid var(--edge);border-radius:12px;padding:12px 14px}
 .recap-stats b{font-weight:900;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
 .recap-stats span{font-size:14px;line-height:1.4}
 .recap-actions{display:flex;flex-wrap:wrap;gap:10px}
-.recap-note{font-size:13px;line-height:1.5;opacity:.8;margin:16px 0 0}
-.recap-alt{margin-top:14px;padding-top:12px;border-top:1px solid var(--edge)}
+.recap-note{font-size:13px;line-height:1.5;opacity:.8;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--edge)}
+.recap-alt{margin-top:12px}
 .linkbtn{background:none;border:0;padding:6px 0;color:var(--cmit-paper);font:500 14px/1.4 var(--font);text-decoration:underline;text-underline-offset:5px;cursor:pointer}
 .linkbtn:hover{text-decoration-color:var(--cmit-red)}
 .lbl.blocked.bad .pill{border-color:var(--cmit-red)}
@@ -948,8 +977,8 @@ footer.foot a:hover{text-decoration:underline}
           <a class="btn btn-primary" id="recap-cta" href="https://calendly.com/osison-cmitsolutions/30min" target="_blank" rel="noopener">Book a free IT Health Check</a>
           <button class="btn btn-sec" id="recap-replay" type="button">Replay the day</button>
         </div>
-        <p class="recap-note" id="recap-note"></p>
         <div class="recap-alt"><button class="linkbtn" id="recap-alt" type="button"></button></div>
+        <p class="recap-note" id="recap-note"></p>
       </div>
     </section>
   </div>
@@ -1884,6 +1913,12 @@ function createApp(L) {
     threat = { curve, t: 0, stop, P, from, v, tgt, blocked, onDone: opts.onDone, len: curve.getLength() };
     threatGroup.visible = true;
   }
+  function socZap(P) {
+    if (!socObj) return;
+    if (zap) { zap.geometry.dispose(); scene.remove(zap); }
+    zap = new T.Mesh(new T.TubeGeometry(arc(socObj.anchors[0], P, .6), 48, .06, 6), zapMat);
+    scene.add(zap); zapT = 0; zapMat.uniforms.uOpacity.value = 1;
+  }
   function impact(P, from, v, tgt) {
     shield.position.copy(P);
     shield.lookAt(from);
@@ -1972,7 +2007,7 @@ function createApp(L) {
   };
   const after = (sec, fn) => live.timers.push({ d: sec, fn });
   const bump = (k, v = 1) => { live.stats[k] = Math.round(((live.stats[k] || 0) + v) * 10) / 10; renderStats(); };
-  const lines = e => (exposed() ? e.exposed : e.text).replace('{n}', PATCH_N);
+  const lines = e => ((exposed() && e.exposed) ? e.exposed : e.text).replace('{n}', PATCH_N);
 
   /* scene helpers */
   function setAlert(o, v) {
@@ -1987,6 +2022,7 @@ function createApp(L) {
     const m = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(s.x, s.y, s.z)),
       new T.LineBasicMaterial({ color: hdr(bad ? C.red : BB, 2.6), toneMapped: false, transparent: true }));
     b.getCenter(m.position); scene.add(m); live.cages.push(m);
+    return m;
   }
   function tag(pos, text, dur = 2.8, bad = false) {
     const el = document.createElement('div');
@@ -2032,6 +2068,36 @@ function createApp(L) {
 
   /* event handlers: each plays both versions of the story */
   const HANDLERS = {
+    /* A section beat: fly to a zone, pulse its items, caption it. Optional tag on one item. */
+    section(e) {
+      live.labelZone = e.zone || null;
+      if (!state.sel && performance.now() >= live.camHold) {
+        const Z = e.zone && zones.get(e.zone);
+        flyTo(Z ? viewForBox(Z.box, 8, Z.def.group === 'office' ? .95 : .85) : overviewView(), 1.2);
+      }
+      if (e.compliance && !state.comp) toggleComp(true);
+      const ids = e.items === 'regulated' ? [...objects.values()].filter(o => o.def.regulated).map(o => o.id) : (e.items || []);
+      ids.forEach((id, k) => after(.5 + k * .16, () => {
+        const o = OBJ(id); if (!o) return;
+        o.pulse = 1; o.anchors.forEach(a => ring(a, 0));
+      }));
+      if (e.tag) after(1.4, () => {
+        const t = exposed() && e.tag.exposed ? e.tag.exposed : e.tag.text;
+        tag(anchorOf(e.tag.on), t, Math.max(2, (e.dur || 4) - 1.4), exposed() && !!e.tag.exposed);
+      });
+    },
+    /* Malware runs on a device. With CMIT: EDR stops it and the SOC isolates it. */
+    edr(e) {
+      const id = e.target || 'laptops', i = e.device || 0, P = anchorOf(id, i);
+      direct([`${id}#${i}`], .55);
+      tag(P, e.ask || 'Fake PDF tool running', 2.2, true);
+      if (!exposed()) {
+        after(1.3, () => { socZap(P); const c = cage(id, i, false); after(3.5, () => { if (c) c.visible = false; }); });
+        after(3, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
+      } else {
+        after(2.3, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
+      }
+    },
     open() { staffShow(true); },
     close(e) {
       staffShow(false);
@@ -2106,7 +2172,7 @@ function createApp(L) {
           bm.forEach(m => { m.userData.fade = 1; });
           ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
           tag(anchorOf('badge'), 'Access removed', 3);
-          bump('fixed');
+          bump('access');
         });
       } else {
         after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
@@ -2120,7 +2186,7 @@ function createApp(L) {
         after(1.2, () => burst(anchorOf('backup'), anchorOf('cloudbackup'), 'paper', 12, 8, .07));
         after(3, () => { tag(anchorOf('cloudbackup'), 'Backup verified', 2.6); bump('backups'); });
       } else {
-        after(1, () => tag(anchorOf('backup'), "Backup didn't run", 3.4, true));
+        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('missed'); });
       }
     },
     patch() {
@@ -2145,7 +2211,7 @@ function createApp(L) {
   const fmt = m => { const t = (DAY0 + m) % 1440, h = Math.floor(t / 60), mm = Math.floor(t % 60); return `${(h % 12) || 12}:${String(mm).padStart(2, '0')}<small>${h < 12 ? 'AM' : 'PM'}</small>`; };
   let lastClock = '';
   function renderStats() {
-    const set = LV.recap[live.mode].stats;
+    const set = LV.recap[live.mode].stats.slice(0, 4);
     $('#hud-stats').innerHTML = set.map(([k, label]) => `<div><b>${live.stats[k] || 0}</b><span>${esc(label)}</span></div>`).join('');
   }
   function renderHud() {
@@ -2179,7 +2245,9 @@ function createApp(L) {
   }
   function liveStart(mode = 'protected') {
     clearWorld();
-    Object.assign(live, { running: true, paused: false, mode, t: 0, i: 0, busy: 0, active: null, stats: {} });
+    Object.assign(live, { running: true, paused: false, mode, t: 0, i: 0, busy: 0, active: null, stats: {}, labelZone: null, offCounted: false });
+    if (live.compWas == null) live.compWas = state.comp;
+    if (state.comp !== live.compWas) toggleComp(live.compWas);
     staffShow(false);
     recap.hidden = true; hud.hidden = false; appEl.classList.add('live-on'); appEl.classList.remove('recap-on');
     $('#hud-mode').textContent = mode === 'exposed' ? 'Without CMIT' : 'With CMIT';
@@ -2196,9 +2264,13 @@ function createApp(L) {
     live.running = false;
     showRecap();
   }
+  function restoreComp() {
+    if (live.compWas != null && state.comp !== live.compWas) toggleComp(live.compWas);
+    live.compWas = null; live.labelZone = null;
+  }
   function liveStop() {
     live.running = false;
-    clearWorld();
+    clearWorld(); restoreComp();
     hud.hidden = true; recap.hidden = true; appEl.classList.remove('live-on', 'recap-on');
     if (live.menuWasOpen && menu.classList.contains('collapsed') && !isPhone()) $('#menu-collapse').click();
     live.menuWasOpen = false;
@@ -2265,9 +2337,13 @@ function createApp(L) {
     if (live.busy > 0) {
       live.busy -= dt;
       if (live.busy <= 0 && threat) live.busy = .05;
-      if (live.busy <= 0 && live.active && !['open', 'close'].includes(live.active.type) && !state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.3);
+
     }
     live.t = Math.min(1440, live.t + rate * dt);
+    const hr = ((DAY0 + live.t) % 1440) / 60;
+    if (!live.walk) staffShow(hr >= 7.5 && hr < 18);
+    const closeT = (18 * 60 - DAY0 + 1440) % 1440;
+    if (exposed() && live.downAt != null && !live.offCounted && live.t >= closeT) { live.offCounted = true; bump('offline', Math.round((closeT - live.downAt) / 6) / 10); }
     while (live.busy <= 0 && live.i < EVENTS.length && live.t >= EVENTS[live.i].m) {
       const e = EVENTS[live.i++];
       live.active = e; live.busy = e.dur || 4.5;
@@ -2283,7 +2359,7 @@ function createApp(L) {
   $('#hud-restart').addEventListener('click', () => { poke(); liveStart(live.mode); });
   $('#recap-replay').addEventListener('click', () => liveStart(live.mode));
   $('#recap-alt').addEventListener('click', () => liveStart(exposed() ? 'protected' : 'exposed'));
-  $('#recap-close').addEventListener('click', () => { recap.hidden = true; hud.hidden = true; appEl.classList.remove('live-on', 'recap-on'); clearWorld(); flyTo(overviewView()); });
+  $('#recap-close').addEventListener('click', () => { restoreComp(); recap.hidden = true; hud.hidden = true; appEl.classList.remove('live-on', 'recap-on'); clearWorld(); flyTo(overviewView()); });
   controls.addEventListener('start', () => { live.camHold = performance.now() + 12000; });
 
   function toggleData(force, ambient) {
@@ -2342,7 +2418,8 @@ function createApp(L) {
   function updateLabels() {
     for (const o of objects.values()) {
       const isSel = state.sel === o.id, isHov = state.hover === o.id;
-      let show = (state.zone === o.zone.id && !state.sel) || isHov || isSel;
+      const lz = live.running ? live.labelZone : null;
+      let show = ((state.zone === o.zone.id || lz === o.zone.id) && !state.sel) || isHov || isSel;
       let op = 1;
       if (show && !isSel && !isHov) {
         o.label.getWorldPosition(_v);
@@ -2355,7 +2432,7 @@ function createApp(L) {
       if (o.labelSel !== s) { o.labelEl.classList.toggle('sel', !!s); o.labelSel = s; }
       if (o.badge) { const bv = state.comp && !show; if (o.badge.visible !== bv) o.badge.visible = bv; }
     }
-    const zs = !state.zone && !state.sel;
+    const zs = !state.zone && !state.sel && !(live.running && live.labelZone);
     for (const Z of zones.values()) if (Z.label.visible !== zs) Z.label.visible = zs;
     labelR.domElement.classList.toggle('comp', state.comp);
   }
