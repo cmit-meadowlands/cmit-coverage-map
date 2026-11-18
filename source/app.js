@@ -1110,36 +1110,57 @@ function createApp(L) {
         after(2.4, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
       }
     },
-    /* Guest Wi-Fi: internet yes, business files no. */
+    /* Guest Wi-Fi: a visitor's laptop gets the internet, and a wall keeps it away from your computers. */
     guest(e) {
-      live.labelZone = 'conference';
-      frameOn(['guestwifi', 'nas', 'ont', 'tv'], .95);
-      const G = anchorOf('guestwifi'), N = anchorOf('nas');
-      tag(G, 'Guest laptop joins', 2.2);
-      after(.6, () => burst(G, anchorOf('ont'), 'paper', 12, 7, .12));
-      after(1.3, () => tag(anchorOf('ont'), 'Internet: yes', 2.4));
+      live.labelZone = '__none';
+      const GL = new V3(-2.9, .4, 3.6), G = GL.clone().add(new V3(0, .45, 0));
+      const AP = anchorOf('guestwifi'), WS = anchorOf('workstations', 3), NET = anchorOf('ont');
+      if (!state.sel && performance.now() >= live.camHold) flyTo(viewForBox(new T.Box3().setFromPoints([GL, AP, WS, new V3(-6, 0, 6)]), 13, 1), 1.2);
+      /* the guest's laptop */
+      const lap = new T.Group(); const lm = stdMats();
+      for (const p of MODELS.laptop()) { const m = new T.Mesh(geo(p.g, p.a), lm[p.m]); m.applyMatrix4(partMatrix(p)); lap.add(m); }
+      lap.position.copy(GL).add(new V3(0, -.75, 0)); lap.rotation.y = -Math.PI / 2; scene.add(lap); (live.temps ||= []).push(lap);
+      ring(G, 0); ring(G, .25);
+      tag(G, "Visitor's laptop", 2.6);
+      after(.9, () => { burst(G, AP, 'paper', 6, 7, .1); });
+      after(1.6, () => { burst(AP, NET, 'paper', 10, 9, .1); tag(AP, 'Guest Wi-Fi', 3); });
+      after(2.6, () => tag(NET, 'Internet: yes', 2.8));
+      const mid = AP.clone().lerp(WS, .55);
       if (!exposed()) {
-        const mid = arc(G, N).getPointAt(.5);
-        after(2.4, () => burst(G, mid, 'bright-blue', 6, 7, .08));
-        after(3.2, () => { ring(mid, 0); ring(mid, .2); ring(mid, .4); tag(mid, 'Your files: no', 2.8); });
+        /* a wall between the guest network and the business network */
+        const wall = new T.Mesh(new T.PlaneGeometry(4.2, 3), new T.MeshBasicMaterial({ color: hdr(BB, 1.3), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
+        const wallEdge = new T.LineSegments(new T.EdgesGeometry(wall.geometry), new T.LineBasicMaterial({ color: hdr(BB, 2.6), toneMapped: false, transparent: true, opacity: 0 }));
+        wall.add(wallEdge); wall.position.copy(mid); wall.lookAt(AP); scene.add(wall); live.extras.push(wall);
+        after(3.2, () => { wall.material.opacity = .14; wallEdge.material.opacity = .9; tag(mid.clone().add(new V3(0, 1.2, 0)), 'Separate network', 3.4); });
+        after(3.6, () => burst(AP, mid, 'bright-blue', 5, 6, .1));
+        after(4.6, () => { ring(mid, 0); ring(mid, .2); ring(mid, .4); wall.material.opacity = .3; tag(WS, 'Your computers: no access', 3); });
+        after(6.5, () => { wall.material.opacity = .08; wallEdge.material.opacity = .4; });
       } else {
-        after(2.4, () => burst(G, N, 'red', 8, 7, .08));
-        after(3.6, () => { setAlert(OBJ('nas'), 1); OBJ('nas').pulse = 1; tag(N, 'Guest reached your files', 99, true); });
+        after(3.6, () => burst(AP, WS, 'red', 6, 6, .1));
+        after(4.2, () => burst(AP, anchorOf('printers'), 'red', 5, 6, .1));
+        after(5, () => { setAlert(OBJ('workstations'), 1); tag(WS, 'Visitor can see your computers', 99, true); });
       }
     },
-    /* AI: your own data, connected and put to work, with guardrails. */
+    /* AI: a staff member asks a question and gets an answer from the business's own data, privately. */
     ai(e) {
-      live.labelZone = 'cloud';
-      frameOn(['email', 'files', 'lob', 'ai', 'teams', 'identity'], .9);
-      const A = anchorOf('ai');
+      live.labelZone = '__none';
+      const W = anchorOf('workstations', 0), A = anchorOf('ai');
+      if (!state.sel && performance.now() >= live.camHold) flyTo(viewForBox(boxOf(['workstations#0', 'ai', 'lob', 'files', 'email']), 16, .95), 1.2);
+      tag(W, e.ask || 'Which clients renew this month?', 2.8);
+      ring(W, 0);
       if (!exposed()) {
-        ['email', 'files', 'lob', 'teams', 'phonesys'].forEach((id, k) => after(.3 + k * .22, () => burst(anchorOf(id), A, 'bright-blue', 6, 7, .07)));
-        after(1.9, () => { ring(A, 0); ring(A, .2); ring(A, .4); OBJ('ai').pulse = 1; tag(A, 'Guardrails on', 2.6); });
-        after(2.6, () => [0, 2, 4, 5].forEach((i, k) => after(k * .2, () => burst(A, anchorOf('workstations', i), 'paper', 6, 9, .07))));
+        after(1, () => burst(W, A, 'bright-blue', 6, 9, .08));
+        after(2, () => { OBJ('ai').pulse = 1; ring(A, 0); tag(A, 'Your AI assistant', 2.6); });
+        after(2.4, () => ['lob', 'files', 'email'].forEach((id, k) => after(k * .3, () => { burst(anchorOf(id), A, 'bright-blue', 5, 8, .07); OBJ(id).pulse = 1; })));
+        after(3.2, () => tag(anchorOf('lob'), 'Reads your CRM, files and email', 2.6));
+        after(4.6, () => { ring(A, 0); ring(A, .2); ring(A, .4); tag(A.clone().add(new V3(0, 1, 0)), 'Data stays private', 2.6); });
+        after(5.2, () => burst(A, W, 'paper', 8, 10, .07));
+        after(6.2, () => { ring(W, 0); tag(W, 'Answer in seconds', 2.6); });
       } else {
-        const ids = ['email', 'files', 'lob', 'teams', 'phonesys', 'web', 'identity'];
-        for (let k = 0; k < 9; k++) after(k * .28, () => { const x = pickOne(ids); let y = pickOne(ids); if (y === x) y = 'ai'; burst(anchorOf(x), anchorOf(y), 'slate', 3, 4); });
-        after(1.8, () => tag(A, 'Data scattered', 3.5, true));
+        const out = new V3(...MAP.dataView.origins[2]);
+        after(1, () => tag(W, 'Pasted into a free AI tool', 3, true));
+        after(1.4, () => burst(W, out, 'red', 10, 9, .08));
+        after(3.2, () => { tag(A, 'Client data left the business', 99, true); setAlert(OBJ('ai'), 1); });
       }
     },
     /* The team at work overnight: a monitoring sweep over every device. */
@@ -1235,22 +1256,21 @@ function createApp(L) {
     },
     offboard(e) {
       const i = e.staff, start = homeOf(i);
-      direct([`staff#${i}`, 'badge', 'identity', 'email'], .7);
+      direct([`staff#${i}`, 'badge', 'identity', 'email', 'files'], .9);
       const P = start.clone().add(new V3(0, 1.4, 0));
-      const ends = ['identity', 'email', 'badge'].map(id => anchorOf(id));
-      const bm = ends.map(B => beamLine(P, B, exposed() ? 'red' : 'paper', .7));
-      tag(P, 'Last day', 2.2);
+      const apps = [['identity', 'Login', 'Login disabled', 'Login still works'], ['email', 'Email', 'Email locked', 'Email still open'],
+        ['files', 'Files', 'Files locked', 'Files still open'], ['badge', 'Door badge', 'Badge deactivated', 'Badge still opens the door']];
+      const bm = apps.map(([id]) => beamLine(P, anchorOf(id), exposed() ? 'red' : 'paper', .7));
+      tag(P, 'Last day at work', 2.6);
+      apps.forEach(([id, name], k) => after(.4 + k * .2, () => tag(anchorOf(id), name, 1.8)));
       const path = new T.CatmullRomCurve3([start, new V3(start.x, 0, -.6), new V3(6.2, 0, -.6), new V3(6.2, 0, 8.3), new V3(6.2, 0, 11.5)]);
-      after(1.2, () => { live.walk = reduced ? null : { i, path, s: 0, d: 3.4 }; if (reduced) setInst(staff, i, start, 0); });
+      after(1.6, () => { live.walk = reduced ? null : { i, path, s: 0, d: 3.4 }; if (reduced) setInst(staff, i, start, 0); });
       if (!exposed()) {
-        after(2.2, () => {
-          bm.forEach(m => { m.userData.fade = 1; });
-          ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
-          tag(anchorOf('badge'), 'Access removed', 3);
-          bump('fixed');
-        });
+        apps.forEach(([id, , off], k) => after(2.4 + k * .55, () => { bm[k].userData.fade = 1; ring(anchorOf(id), 0); OBJ(id).pulse = 1; tag(anchorOf(id), off, 3); }));
+        after(5, () => bump('fixed'));
       } else {
-        after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
+        apps.forEach(([id, , , on], k) => after(2.6 + k * .4, () => tag(anchorOf(id), on, k ? 6 : 99, true)));
+        after(4.5, () => bump('open'));
       }
     },
     backup() {
@@ -1310,6 +1330,8 @@ function createApp(L) {
     live.timers.length = 0; live.pend.length = 0;
     for (const m of live.cages) { m.geometry.dispose(); scene.remove(m); }
     for (const m of live.extras) { m.geometry.dispose(); scene.remove(m); }
+    for (const m of (live.temps || [])) scene.remove(m);
+    live.temps = [];
     for (const t of live.tags) scene.remove(t.o);
     live.cages.length = live.extras.length = live.tags.length = 0;
     for (const r of rings) { r.on = false; r.m.visible = false; }
@@ -1477,7 +1499,7 @@ function createApp(L) {
     $('#toast-text').textContent = t;
     $('#toast').classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 3600);
+    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), Math.max(3600, t.length * 60));
   }
 
   /* ---------- truck ---------- */
