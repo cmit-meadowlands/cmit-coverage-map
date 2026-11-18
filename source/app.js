@@ -883,6 +883,12 @@ function createApp(L) {
     threat = { curve, t: 0, stop, P, from, v, tgt, blocked, onDone: opts.onDone, len: curve.getLength() };
     threatGroup.visible = true;
   }
+  function socZap(P) {
+    if (!socObj) return;
+    if (zap) { zap.geometry.dispose(); scene.remove(zap); }
+    zap = new T.Mesh(new T.TubeGeometry(arc(socObj.anchors[0], P, .6), 48, .06, 6), zapMat);
+    scene.add(zap); zapT = 0; zapMat.uniforms.uOpacity.value = 1;
+  }
   function impact(P, from, v, tgt) {
     shield.position.copy(P);
     shield.lookAt(from);
@@ -971,7 +977,7 @@ function createApp(L) {
   };
   const after = (sec, fn) => live.timers.push({ d: sec, fn });
   const bump = (k, v = 1) => { live.stats[k] = Math.round(((live.stats[k] || 0) + v) * 10) / 10; renderStats(); };
-  const lines = e => (exposed() ? e.exposed : e.text).replace('{n}', PATCH_N);
+  const lines = e => ((exposed() && e.exposed) ? e.exposed : e.text).replace('{n}', PATCH_N);
 
   /* scene helpers */
   function setAlert(o, v) {
@@ -986,6 +992,7 @@ function createApp(L) {
     const m = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(s.x, s.y, s.z)),
       new T.LineBasicMaterial({ color: hdr(bad ? C.red : BB, 2.6), toneMapped: false, transparent: true }));
     b.getCenter(m.position); scene.add(m); live.cages.push(m);
+    return m;
   }
   function tag(pos, text, dur = 2.8, bad = false) {
     const el = document.createElement('div');
@@ -1031,6 +1038,36 @@ function createApp(L) {
 
   /* event handlers: each plays both versions of the story */
   const HANDLERS = {
+    /* A section beat: fly to a zone, pulse its items, caption it. Optional tag on one item. */
+    section(e) {
+      live.labelZone = e.zone || null;
+      if (!state.sel && performance.now() >= live.camHold) {
+        const Z = e.zone && zones.get(e.zone);
+        flyTo(Z ? viewForBox(Z.box, 8, Z.def.group === 'office' ? .95 : .85) : overviewView(), 1.2);
+      }
+      if (e.compliance && !state.comp) toggleComp(true);
+      const ids = e.items === 'regulated' ? [...objects.values()].filter(o => o.def.regulated).map(o => o.id) : (e.items || []);
+      ids.forEach((id, k) => after(.5 + k * .16, () => {
+        const o = OBJ(id); if (!o) return;
+        o.pulse = 1; o.anchors.forEach(a => ring(a, 0));
+      }));
+      if (e.tag) after(1.4, () => {
+        const t = exposed() && e.tag.exposed ? e.tag.exposed : e.tag.text;
+        tag(anchorOf(e.tag.on), t, Math.max(2, (e.dur || 4) - 1.4), exposed() && !!e.tag.exposed);
+      });
+    },
+    /* Malware runs on a device. With CMIT: EDR stops it and the SOC isolates it. */
+    edr(e) {
+      const id = e.target || 'laptops', i = e.device || 0, P = anchorOf(id, i);
+      direct([`${id}#${i}`], .55);
+      tag(P, e.ask || 'Fake PDF tool running', 2.2, true);
+      if (!exposed()) {
+        after(1.3, () => { socZap(P); const c = cage(id, i, false); after(3.5, () => { if (c) c.visible = false; }); });
+        after(3, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
+      } else {
+        after(2.3, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
+      }
+    },
     open() { staffShow(true); },
     close(e) {
       staffShow(false);
@@ -1105,7 +1142,7 @@ function createApp(L) {
           bm.forEach(m => { m.userData.fade = 1; });
           ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
           tag(anchorOf('badge'), 'Access removed', 3);
-          bump('fixed');
+          bump('access');
         });
       } else {
         after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
@@ -1119,7 +1156,7 @@ function createApp(L) {
         after(1.2, () => burst(anchorOf('backup'), anchorOf('cloudbackup'), 'paper', 12, 8, .07));
         after(3, () => { tag(anchorOf('cloudbackup'), 'Backup verified', 2.6); bump('backups'); });
       } else {
-        after(1, () => tag(anchorOf('backup'), "Backup didn't run", 3.4, true));
+        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('missed'); });
       }
     },
     patch() {
@@ -1144,7 +1181,7 @@ function createApp(L) {
   const fmt = m => { const t = (DAY0 + m) % 1440, h = Math.floor(t / 60), mm = Math.floor(t % 60); return `${(h % 12) || 12}:${String(mm).padStart(2, '0')}<small>${h < 12 ? 'AM' : 'PM'}</small>`; };
   let lastClock = '';
   function renderStats() {
-    const set = LV.recap[live.mode].stats;
+    const set = LV.recap[live.mode].stats.slice(0, 4);
     $('#hud-stats').innerHTML = set.map(([k, label]) => `<div><b>${live.stats[k] || 0}</b><span>${esc(label)}</span></div>`).join('');
   }
   function renderHud() {
@@ -1178,7 +1215,9 @@ function createApp(L) {
   }
   function liveStart(mode = 'protected') {
     clearWorld();
-    Object.assign(live, { running: true, paused: false, mode, t: 0, i: 0, busy: 0, active: null, stats: {} });
+    Object.assign(live, { running: true, paused: false, mode, t: 0, i: 0, busy: 0, active: null, stats: {}, labelZone: null, offCounted: false });
+    if (live.compWas == null) live.compWas = state.comp;
+    if (state.comp !== live.compWas) toggleComp(live.compWas);
     staffShow(false);
     recap.hidden = true; hud.hidden = false; appEl.classList.add('live-on'); appEl.classList.remove('recap-on');
     $('#hud-mode').textContent = mode === 'exposed' ? 'Without CMIT' : 'With CMIT';
@@ -1195,9 +1234,13 @@ function createApp(L) {
     live.running = false;
     showRecap();
   }
+  function restoreComp() {
+    if (live.compWas != null && state.comp !== live.compWas) toggleComp(live.compWas);
+    live.compWas = null; live.labelZone = null;
+  }
   function liveStop() {
     live.running = false;
-    clearWorld();
+    clearWorld(); restoreComp();
     hud.hidden = true; recap.hidden = true; appEl.classList.remove('live-on', 'recap-on');
     if (live.menuWasOpen && menu.classList.contains('collapsed') && !isPhone()) $('#menu-collapse').click();
     live.menuWasOpen = false;
@@ -1264,9 +1307,13 @@ function createApp(L) {
     if (live.busy > 0) {
       live.busy -= dt;
       if (live.busy <= 0 && threat) live.busy = .05;
-      if (live.busy <= 0 && live.active && !['open', 'close'].includes(live.active.type) && !state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.3);
+
     }
     live.t = Math.min(1440, live.t + rate * dt);
+    const hr = ((DAY0 + live.t) % 1440) / 60;
+    if (!live.walk) staffShow(hr >= 7.5 && hr < 18);
+    const closeT = (18 * 60 - DAY0 + 1440) % 1440;
+    if (exposed() && live.downAt != null && !live.offCounted && live.t >= closeT) { live.offCounted = true; bump('offline', Math.round((closeT - live.downAt) / 6) / 10); }
     while (live.busy <= 0 && live.i < EVENTS.length && live.t >= EVENTS[live.i].m) {
       const e = EVENTS[live.i++];
       live.active = e; live.busy = e.dur || 4.5;
@@ -1282,7 +1329,7 @@ function createApp(L) {
   $('#hud-restart').addEventListener('click', () => { poke(); liveStart(live.mode); });
   $('#recap-replay').addEventListener('click', () => liveStart(live.mode));
   $('#recap-alt').addEventListener('click', () => liveStart(exposed() ? 'protected' : 'exposed'));
-  $('#recap-close').addEventListener('click', () => { recap.hidden = true; hud.hidden = true; appEl.classList.remove('live-on', 'recap-on'); clearWorld(); flyTo(overviewView()); });
+  $('#recap-close').addEventListener('click', () => { restoreComp(); recap.hidden = true; hud.hidden = true; appEl.classList.remove('live-on', 'recap-on'); clearWorld(); flyTo(overviewView()); });
   controls.addEventListener('start', () => { live.camHold = performance.now() + 12000; });
 
   function toggleData(force, ambient) {
@@ -1341,7 +1388,8 @@ function createApp(L) {
   function updateLabels() {
     for (const o of objects.values()) {
       const isSel = state.sel === o.id, isHov = state.hover === o.id;
-      let show = (state.zone === o.zone.id && !state.sel) || isHov || isSel;
+      const lz = live.running ? live.labelZone : null;
+      let show = ((state.zone === o.zone.id || lz === o.zone.id) && !state.sel) || isHov || isSel;
       let op = 1;
       if (show && !isSel && !isHov) {
         o.label.getWorldPosition(_v);
@@ -1354,7 +1402,7 @@ function createApp(L) {
       if (o.labelSel !== s) { o.labelEl.classList.toggle('sel', !!s); o.labelSel = s; }
       if (o.badge) { const bv = state.comp && !show; if (o.badge.visible !== bv) o.badge.visible = bv; }
     }
-    const zs = !state.zone && !state.sel;
+    const zs = !state.zone && !state.sel && !(live.running && live.labelZone);
     for (const Z of zones.values()) if (Z.label.visible !== zs) Z.label.visible = zs;
     labelR.domElement.classList.toggle('comp', state.comp);
   }

@@ -206,20 +206,23 @@ kbd{font:500 10px/1 var(--font);border:1px solid rgba(var(--paper-rgb),.35);bord
 .hud-stats span{font-size:12px;line-height:1.35}
 .hud-note{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
 #recap{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--g);background:rgba(var(--navy-rgb),.55)}
-#recap .card{width:min(560px,100%);max-height:100%;overflow:auto}
+#recap .card{width:min(660px,100%);max-height:100%;overflow:auto}
 #recap .inner{padding:16px 28px 18px}
 #recap h2{font-size:30px}
 .recap-on #cta{display:none}
+.live-on #legend{display:none}
+.recap-on #nav{display:none}
 .recap-top{display:flex;align-items:center;gap:10px}
 .recap-top .pre{flex:1;margin:0}
 #recap h2{margin-top:10px}
-.recap-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.recap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}
+@media (max-width:639px){.recap-stats{grid-template-columns:1fr 1fr}}
 .recap-stats div{border:1px solid var(--edge);border-radius:12px;padding:12px 14px}
 .recap-stats b{font-weight:900;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
 .recap-stats span{font-size:14px;line-height:1.4}
 .recap-actions{display:flex;flex-wrap:wrap;gap:10px}
-.recap-note{font-size:13px;line-height:1.5;opacity:.8;margin:16px 0 0}
-.recap-alt{margin-top:14px;padding-top:12px;border-top:1px solid var(--edge)}
+.recap-note{font-size:13px;line-height:1.5;opacity:.8;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--edge)}
+.recap-alt{margin-top:12px}
 .linkbtn{background:none;border:0;padding:6px 0;color:var(--cmit-paper);font:500 14px/1.4 var(--font);text-decoration:underline;text-underline-offset:5px;cursor:pointer}
 .linkbtn:hover{text-decoration-color:var(--cmit-red)}
 .lbl.blocked.bad .pill{border-color:var(--cmit-red)}
@@ -360,8 +363,8 @@ footer.foot a:hover{text-decoration:underline}
           <a class="btn btn-primary" id="recap-cta" href="https://calendly.com/osison-cmitsolutions/30min" target="_blank" rel="noopener">Book a free IT Health Check</a>
           <button class="btn btn-sec" id="recap-replay" type="button">Replay the day</button>
         </div>
-        <p class="recap-note" id="recap-note"></p>
         <div class="recap-alt"><button class="linkbtn" id="recap-alt" type="button"></button></div>
+        <p class="recap-note" id="recap-note"></p>
       </div>
     </section>
   </div>

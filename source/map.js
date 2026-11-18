@@ -136,7 +136,7 @@ const MAP = {
       bounds: [-6, -8, 12, 0],
       objects: [
         { id: "workstations", labelIndex: 0, name: "Desktop workstations", link: "MS", handlers: ["soc", "remote", "onsite"],
-          tag: "EDR, patching, remote support",
+          tag: "EDR + 24/7 SOC response",
           model: "workstation", at: [[-3.6, 0, -6.2], [-0.4, 0, -6.2], [2.8, 0, -6.2], [-3.6, 0, -2.8], [2.8, 0, -2.8], [6.0, 0, -2.8]],
           summary: "Every desk computer gets the same protection and care, whether you have five or fifty. We run EDR (endpoint detection and response), keep Windows and your apps patched, and fix problems remotely, often before anyone notices.",
           bullets: ["EDR protection watched by the CMIT SOC", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
@@ -406,59 +406,85 @@ const MAP = {
      ransomware, restore, offboard, backup, patch. */
   liveView: {
     dayStart: "07:00",
-    minutesPerSecond: 22,        /* clock speed between events */
-    eventMinutesPerSecond: 1.5,  /* clock speed while an event plays */
+    minutesPerSecond: 60,        /* clock speed between beats */
+    eventMinutesPerSecond: 1.5,  /* clock speed while a beat plays */
     note: "Simulated day. Every number comes from this animation, not from client data.",
+    /* A tour of the six sections, in clock order. `section` beats fly to a zone
+       (none = whole map), pulse `items` and caption them; `tag` labels one item;
+       `compliance: true` turns the Compliance lens on. No kind of event repeats. */
     events: [
-      { at: "07:30", type: "open", dur: 2,
-        text: "7:30 AM. Your team logs in.", exposed: "7:30 AM. Your team logs in." },
-      { at: "08:45", type: "helpdesk", staff: 1, device: 1, ask: "Shared drive won't open",
-        text: "Help desk ticket fixed remotely. Back to work in minutes.",
-        exposed: "Help desk ticket opened. Nobody is watching the queue." },
-      { at: "10:15", type: "threat", target: "email", origin: 0, victim: 2, hit: "Password stolen",
-        text: "Phishing email blocked by the CMIT SOC.",
-        exposed: "Phishing email delivered. Someone typed their password into a fake login page." },
-      { at: "11:40", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened",
-        text: "Sign-in from overseas stopped by MFA.",
-        exposed: "Sign-in from overseas succeeded. Shared files were opened." },
-      { at: "13:20", type: "ransomware", target: "firewall", origin: 1, victim: 3, dur: 7,
-        text: "Ransomware download stopped at the firewall. Nobody had to unplug anything.",
-        exposed: "Ransomware got in. Computers, the server, and the backups are encrypted." },
-      { at: "15:05", type: "restore",
-        text: "Deleted folder restored from backup.",
-        exposed: "Deleted folder is gone. There is no working backup to restore from." },
-      { at: "16:50", type: "offboard", staff: 5, dur: 5.5,
-        text: "Employee's last day. Access removed from every app and the front door.",
-        exposed: "Employee's last day. Their accounts and badge still work." },
-      { at: "18:00", type: "close", dur: 2,
-        text: "6:00 PM. The office closes. We keep watching.",
-        exposed: "6:00 PM. The office closes. Nobody is watching." },
-      { at: "20:30", type: "threat", target: "firewall", origin: 4, hit: "Way in found",
-        text: "Port scan blocked and logged by the CMIT SOC.",
-        exposed: "Port scan found an open door on the firewall." },
-      { at: "23:30", type: "backup",
-        text: "Nightly backup completed and verified.",
-        exposed: "Nightly backup didn't run. Nobody noticed." },
-      { at: "02:00", type: "patch", dur: 5,
+      { at: "07:05", type: "section", dur: 3,
+        text: "One team covers everything your business runs on." },
+
+      { at: "08:00", type: "section", zone: "closet", dur: 4,
+        items: ["ont", "firewall", "switch", "server", "nas", "backup", "ups"],
+        text: "Network & Server Closet. Where the internet enters and the business data lives." },
+      { at: "09:10", type: "ransomware", target: "firewall", origin: 1, victim: 3, dur: 8,
+        text: "Ransomware download stopped at the firewall.",
+        exposed: "Ransomware got in. Computers, server and backups encrypted. Office offline." },
+
+      { at: "10:00", type: "section", zone: "workspace", dur: 3.5,
+        items: ["workstations", "laptops", "mobile", "printers", "staff"],
+        text: "Workspace. Every device your team touches, plus the team." },
+      { at: "10:30", type: "helpdesk", staff: 1, device: 1, ask: "Shared drive won't open", dur: 5,
+        text: "Help desk ticket fixed remotely in minutes.",
+        exposed: "Help desk ticket opened. Still waiting on IT." },
+      { at: "11:45", type: "edr", target: "laptops", device: 0, ask: "Fake PDF tool running", dur: 5.5,
+        text: "A fake PDF tool starts running. EDR stops it and the SOC isolates the laptop.",
+        exposed: "Antivirus logged an alert. Nobody read it. The attacker stays for months." },
+
+      { at: "13:00", type: "section", zone: "conference", dur: 6,
+        items: ["av", "tv", "aps", "guestwifi"],
+        tag: { on: "guestwifi", text: "Guest network only", exposed: "Same network as your files" },
+        text: "Conference & Common Area. A guest's laptop gets internet, never your files.",
+        exposed: "Conference & Common Area. Guests share the network with your files and printers." },
+
+      { at: "14:30", type: "section", zone: "building", dur: 3.5,
+        items: ["cameras", "badge", "intercom", "alarm", "iot", "pos"],
+        text: "Building Systems. Doors, cameras, payments, and the devices nobody tracks." },
+      { at: "16:50", type: "offboard", staff: 5, dur: 7,
+        text: "Last day: access removed from every app and the front door.",
+        exposed: "Last day. Their accounts and badge still work." },
+
+      { at: "18:30", type: "section", zone: "cloud", dur: 3.5,
+        items: ["email", "identity", "files", "teams", "lob", "cloudbackup", "ai"],
+        text: "Cloud. The services your business runs on, wherever your team works." },
+      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", dur: 5,
+        text: "Sign-in from overseas stopped by MFA and conditional access.",
+        exposed: "Sign-in from overseas succeeded. Shared files opened." },
+      { at: "21:00", type: "section", zone: "cloud", dur: 4,
+        items: ["ai", "lob"],
+        tag: { on: "ai", text: "Data put to work", exposed: "Data scattered" },
+        text: "Your own data, connected and put to work, with guardrails.",
+        exposed: "Data spread across apps nobody connected." },
+
+      { at: "23:00", type: "section", zone: "team", dur: 3.5,
+        items: ["soc", "remote", "truck"],
+        text: "CMIT Team. The people behind it: watching, fixing, showing up." },
+      { at: "02:00", type: "patch", dur: 4.5,
         text: "Updates installed on {n} devices while you slept.",
-        exposed: "{n} devices are still waiting on updates." },
-      { at: "03:40", type: "threat", target: "identity", origin: 3, spread: "email", hit: "Old account used",
-        text: "Former employee's sign-in rejected. That account no longer exists.",
-        exposed: "Former employee's account used to sign in overnight." }
+        exposed: "{n} devices still unpatched." },
+      { at: "03:30", type: "backup", dur: 4,
+        text: "Nightly backup completed and verified.",
+        exposed: "Backup didn't run. Nobody noticed." },
+
+      { at: "06:00", type: "section", dur: 6, items: "regulated", compliance: true,
+        text: "Every action left a record for your insurer, auditor or buyer.",
+        exposed: "No records. Nothing to show an insurer, auditor or buyer." }
     ],
     recap: {
       protected: {
         preheader: "Simulated day with CMIT",
         title: "Here's what your technology team handled today",
         body: "Your staff worked the whole day without noticing any of it. That's the point.",
-        stats: [["blocked", "Threats blocked"], ["fixed", "Problems fixed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
+        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["access", "Access removed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
         alt: "See the same day without CMIT"
       },
       exposed: {
         preheader: "Simulated day without CMIT",
         title: "The same day without a technology team",
         body: "Same office, same day, same threats. This time nobody was watching.",
-        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["unpatched", "Devices left unpatched"], ["open", "Former employee accounts left open"]],
+        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["open", "Former employee accounts left open"], ["unpatched", "Devices left unpatched"], ["missed", "Backups that didn't run"]],
         alt: "Replay the day with CMIT"
       }
     }
