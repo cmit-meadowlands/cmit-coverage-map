@@ -798,8 +798,10 @@ function createApp(L) {
         const curve = arc(A.anchors[0], B.anchors[0]);
         const base = f.width ? .3 : .5;
         const mat = tubeMat(hdr(C[f.color], .9), base, reduced ? 0 : 3);
-        flowGroup.add(new T.Mesh(new T.TubeGeometry(curve, 48, f.width || .03, 5, false), mat));
-        links.push({ f, a, b, curve, len: curve.getLength(), mat, base, acc: Math.random(), pcol: hdr(C[f.color], FLOWK[f.color] || 1.5), phase: Math.random() * 6, dim: false });
+        const mesh = new T.Mesh(new T.TubeGeometry(curve, 48, f.width || .03, 5, false), mat);
+        flowGroup.add(mesh);
+        const team = [A, B].some(o => o.zone.group === 'team');
+        links.push({ f, a, b, curve, mesh, team, len: curve.getLength(), mat, base, acc: Math.random(), pcol: hdr(C[f.color], FLOWK[f.color] || 1.5), phase: Math.random() * 6, dim: false });
       }
     }
     refreshFlowDims();
@@ -813,6 +815,7 @@ function createApp(L) {
   }
   function updatePackets(dt) {
     for (const l of links) {
+      if (l.team && live.running && exposed()) continue;
       let rate = l.f.rate;
       if (l.f.burst) rate = Math.sin(time * 1.3 + l.phase) > .35 ? rate : 0;
       l.acc += rate * dt;
@@ -905,6 +908,7 @@ function createApp(L) {
       scene.add(zap); zapT = 0; zapMat.uniforms.uOpacity.value = 1;
     }
     if (tgt) tgt.pulse = 1;
+    if (tgt && tgt.zone.group === 'office') domeFlash();
     socPulse = 1;
     toast(v.text);
   }
@@ -932,6 +936,16 @@ function createApp(L) {
     }
   }
   function updateFx(dt) {
+    if (domeT >= 0) {
+      domeT += dt; const s = domeT / 1.5;
+      if (s >= 1) { domeT = -1; dome.visible = false; }
+      else { const a = s < .12 ? s / .12 : 1 - (s - .12) / .88; domeFill.opacity = .13 * a; domeLineMat.opacity = .85 * a; dome.scale.set(15 + s, 7 + s * .5, 11 + s); }
+    }
+    if (sweepT >= 0) {
+      sweepT += dt; const s = sweepT / 3.2;
+      if (s >= 1) { sweepT = -1; sweep.visible = false; }
+      else { sweep.visible = true; sweep.position.set(-12.8 + 25.6 * s, 1.8, 0); const a = Math.sin(Math.PI * s); sweepMat.opacity = .16 * a; sweepEdge.material.opacity = a; }
+    }
     if (zapT >= 0) {
       zapT += dt;
       const s = zapT / .8;
@@ -985,13 +999,14 @@ function createApp(L) {
     o.alert = v;
     o.mats.screen.color.copy(v ? C.red : BB).multiplyScalar(v ? .6 : .5);
   }
-  function cage(id, i, bad) {
+  function cage(id, i, bad, snap) {
     const o = OBJ(id); if (!o) return;
     const b = (o.iboxes[i] || o.box).clone().expandByScalar(.12);
     const s = b.getSize(new V3());
     const m = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(s.x, s.y, s.z)),
       new T.LineBasicMaterial({ color: hdr(bad ? C.red : BB, 2.6), toneMapped: false, transparent: true }));
     b.getCenter(m.position); scene.add(m); live.cages.push(m);
+    if (snap && !reduced) { m.userData.snap = 1; m.scale.setScalar(2.5); }
     return m;
   }
   function tag(pos, text, dur = 2.8, bad = false) {
@@ -1033,10 +1048,33 @@ function createApp(L) {
   const staffShow = on => { if (staff) staff.group.visible = on; };
   function direct(list, k = .9) {
     if (!live.running || state.sel || performance.now() < live.camHold) return;
-    flyTo(viewForBox(boxOf(list), 10, k), 1.1);
+    flyTo(viewForBox(boxOf(list), 15, Math.max(k, 1)), 1.1);
   }
 
   /* event handlers: each plays both versions of the story */
+  /* Perimeter dome: flashes when an attack is stopped at the office's outer wall. */
+  renderer.localClippingEnabled = true;
+  const domeClip = [new T.Plane(new V3(0, 1, 0), .02)];
+  const domeGeo = new T.IcosahedronGeometry(1, 2);
+  const domeFill = new T.MeshBasicMaterial({ color: hdr(BB, 1.2), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending, clippingPlanes: domeClip });
+  const domeLineMat = new T.LineBasicMaterial({ color: hdr(BB, 2.6), toneMapped: false, transparent: true, opacity: 0, clippingPlanes: domeClip });
+  const dome = new T.Mesh(domeGeo, domeFill);
+  dome.add(new T.LineSegments(new T.EdgesGeometry(domeGeo), domeLineMat));
+  dome.scale.set(15, 7, 11); dome.visible = false; scene.add(dome);
+  let domeT = -1;
+  function domeFlash() { domeT = 0; dome.visible = true; }
+  /* Monitoring sweep: a scan line that passes over every device. */
+  const sweepMat = new T.MeshBasicMaterial({ color: hdr(BB, 1.4), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending });
+  const sweep = new T.Mesh(new T.PlaneGeometry(16.6, 3.6), sweepMat);
+  sweep.rotation.y = Math.PI / 2; sweep.visible = false; scene.add(sweep);
+  const sweepEdge = new T.LineSegments(new T.EdgesGeometry(sweep.geometry), new T.LineBasicMaterial({ color: hdr(BB, 2.6), toneMapped: false, transparent: true, opacity: 0 }));
+  sweep.add(sweepEdge);
+  let sweepT = -1;
+  const TEAM_IDS = ['soc', 'remote', 'truck'];
+  const officeObjs = () => [...objects.values()].filter(o => o.zone.group === 'office' && o.id !== 'staff' && o.id !== 'rack');
+  const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
+  const frameOn = (list, k = 1, minD = 14) => { if (!state.sel && performance.now() >= live.camHold) flyTo(viewForBox(boxOf(list), minD, k), 1.2); };
+
   const HANDLERS = {
     /* A section beat: fly to a zone, pulse its items, caption it. Optional tag on one item. */
     section(e) {
@@ -1056,17 +1094,77 @@ function createApp(L) {
         tag(anchorOf(e.tag.on), t, Math.max(2, (e.dur || 4) - 1.4), exposed() && !!e.tag.exposed);
       });
     },
-    /* Malware runs on a device. With CMIT: EDR stops it and the SOC isolates it. */
+    /* Malware runs on a device. With CMIT, EDR traps it and your team isolates the device. */
     edr(e) {
       const id = e.target || 'laptops', i = e.device || 0, P = anchorOf(id, i);
-      direct([`${id}#${i}`], .55);
-      tag(P, e.ask || 'Fake PDF tool running', 2.2, true);
+      frameOn([`${id}#${i}`, 'workstations', 'voip'], 1);
+      tag(P, e.ask || 'Fake PDF tool running', 2.4, true);
+      ring(P, 0, 'red');
       if (!exposed()) {
-        after(1.3, () => { socZap(P); const c = cage(id, i, false); after(3.5, () => { if (c) c.visible = false; }); });
-        after(3, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
+        after(.6, () => { for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; burst(P, P.clone().add(new V3(Math.cos(a) * 1.5, .35, Math.sin(a) * 1.5)), 'red', 2, 3.5, .18); } });
+        after(1.2, () => { socZap(P); const c = cage(id, i, false, true); ring(P, 0); ring(P, .2); after(4, () => { if (c) c.visible = false; }); });
+        after(3.1, () => { tag(P, 'Isolated · cleaned', 2.6); bump('isolated'); OBJ(id).pulse = 1; socPulse = 1; });
       } else {
-        after(2.3, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
+        const hits = [['workstations', 0], ['workstations', 2], ['workstations', 4], ['server', 0], ['nas', 0]];
+        hits.forEach(([t, j], k) => after(.6 + k * .35, () => { burst(P, anchorOf(t, j), 'red', 5, 7); after(.9, () => cage(t, j, true)); }));
+        after(2.4, () => { cage(id, i, true); setAlert(OBJ(id), 1); tag(P, 'Still compromised', 99, true); bump('compromised'); });
       }
+    },
+    /* Guest Wi-Fi: internet yes, business files no. */
+    guest(e) {
+      live.labelZone = 'conference';
+      frameOn(['guestwifi', 'nas', 'ont', 'tv'], .95);
+      const G = anchorOf('guestwifi'), N = anchorOf('nas');
+      tag(G, 'Guest laptop joins', 2.2);
+      after(.6, () => burst(G, anchorOf('ont'), 'paper', 12, 7, .12));
+      after(1.3, () => tag(anchorOf('ont'), 'Internet: yes', 2.4));
+      if (!exposed()) {
+        const mid = arc(G, N).getPointAt(.5);
+        after(2.4, () => burst(G, mid, 'bright-blue', 6, 7, .08));
+        after(3.2, () => { ring(mid, 0); ring(mid, .2); ring(mid, .4); tag(mid, 'Your files: no', 2.8); });
+      } else {
+        after(2.4, () => burst(G, N, 'red', 8, 7, .08));
+        after(3.6, () => { setAlert(OBJ('nas'), 1); OBJ('nas').pulse = 1; tag(N, 'Guest reached your files', 99, true); });
+      }
+    },
+    /* AI: your own data, connected and put to work, with guardrails. */
+    ai(e) {
+      live.labelZone = 'cloud';
+      frameOn(['email', 'files', 'lob', 'ai', 'teams', 'identity'], .9);
+      const A = anchorOf('ai');
+      if (!exposed()) {
+        ['email', 'files', 'lob', 'teams', 'phonesys'].forEach((id, k) => after(.3 + k * .22, () => burst(anchorOf(id), A, 'bright-blue', 6, 7, .07)));
+        after(1.9, () => { ring(A, 0); ring(A, .2); ring(A, .4); OBJ('ai').pulse = 1; tag(A, 'Guardrails on', 2.6); });
+        after(2.6, () => [0, 2, 4, 5].forEach((i, k) => after(k * .2, () => burst(A, anchorOf('workstations', i), 'paper', 6, 9, .07))));
+      } else {
+        const ids = ['email', 'files', 'lob', 'teams', 'phonesys', 'web', 'identity'];
+        for (let k = 0; k < 9; k++) after(k * .28, () => { const x = pickOne(ids); let y = pickOne(ids); if (y === x) y = 'ai'; burst(anchorOf(x), anchorOf(y), 'slate', 3, 4); });
+        after(1.8, () => tag(A, 'Data scattered', 3.5, true));
+      }
+    },
+    /* The team at work overnight: a monitoring sweep over every device. */
+    team(e) {
+      live.labelZone = 'team';
+      if (!state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.2);
+      TEAM_IDS.forEach((id, k) => after(.3 + k * .3, () => { const o = OBJ(id); if (o) { o.pulse = 1; ring(anchorOf(id), 0); } }));
+      after(1.1, () => {
+        sweepT = 0;
+        for (const o of officeObjs()) after(Math.max(0, (o.anchors[0].x + 12.8) / 25.6 * 3.2), () => { o.pulse = 1; });
+        socZap(new V3(0, 3.2, 0));
+      });
+      after(4.3, () => tag(anchorOf('soc'), 'Watching 24/7', 2.4));
+    },
+    /* Compliance: the controls your regulations require, checked one by one. */
+    comply(e) {
+      live.labelZone = '__none';
+      if (!state.sel && performance.now() >= live.camHold) flyTo(overviewView(), 1.2);
+      if (!state.comp) toggleComp(true);
+      const regs = [...objects.values()].filter(o => o.def.regulated);
+      regs.forEach((o, k) => after(.9 + k * .45, () => {
+        o.pulse = 1; ring(o.anchors[0], 0, exposed() ? 'red' : 'bright-blue');
+        if (!exposed()) { tag(o.anchors[0], o.def.control || 'Control in place', 99); bump('controls'); }
+        else { tag(o.anchors[0], o.def.gap || 'Gap found', 99, true); setAlert(o, 1); bump('gaps'); }
+      }));
     },
     open() { staffShow(true); },
     close(e) {
@@ -1076,18 +1174,25 @@ function createApp(L) {
     },
     helpdesk(e) {
       const who = `staff#${e.staff}`, pc = `workstations#${e.device}`;
-      direct([who, pc, 'remote'], .8);
+      frameOn([who, pc, 'workstations'], 1);
       live.bob = { i: e.staff, home: homeOf(e.staff) };
       tag(anchorOf('staff', e.staff), e.ask, 3);
       if (!exposed()) {
-        after(1.4, () => burst(anchorOf('remote'), anchorOf('workstations', e.device), 'orange', 14, 8, .08));
-        after(3.4, () => { tag(anchorOf('workstations', e.device), 'Fixed remotely', 2.6); live.bob = null; setInst(staff, e.staff, homeOf(e.staff)); bump('fixed'); OBJ('remote').pulse = 1; });
+        const R = anchorOf('remote'), D = anchorOf('workstations', e.device);
+        after(1.2, () => { const m = beamLine(R, D, 'orange', .9); after(3, () => { m.userData.fade = 1; }); ring(R, 0, 'orange'); OBJ('remote').pulse = 1; tag(R, 'Remote session', 2); });
+        after(1.5, () => burst(R, D, 'orange', 16, 9, .07));
+        after(2.6, () => { ring(D, 0, 'orange'); ring(D, .25); });
+        after(3.4, () => { tag(D, 'Resolved remotely', 2.6); live.bob = null; setInst(staff, e.staff, homeOf(e.staff)); bump('fixed'); });
       } else {
         after(3.2, () => tag(anchorOf('staff', e.staff), 'Still waiting on IT', 4, true));
       }
     },
     threat(e) {
-      direct([e.target], .55);
+      frameOn(e.mfa ? [e.target, 'files', 'email'] : [e.target], 1, 16);
+      if (e.mfa && !exposed()) {
+        after(.7, () => burst(anchorOf(e.target), anchorOf('mobile'), 'bright-blue', 6, 9, .08));
+        after(1.8, () => { ring(anchorOf('mobile'), 0); tag(anchorOf('mobile'), 'Sign-in request: denied', 3); });
+      }
       launchThreat({ target: e.target, origin: e.origin, text: lines(e) }, {
         blocked: !exposed(),
         onDone: () => {
@@ -1142,7 +1247,7 @@ function createApp(L) {
           bm.forEach(m => { m.userData.fade = 1; });
           ends.forEach((B, k) => after(k * .25, () => ring(B, 0)));
           tag(anchorOf('badge'), 'Access removed', 3);
-          bump('access');
+          bump('fixed');
         });
       } else {
         after(2.4, () => { tag(anchorOf('identity'), 'Account still active', 99, true); bump('open'); });
@@ -1156,7 +1261,7 @@ function createApp(L) {
         after(1.2, () => burst(anchorOf('backup'), anchorOf('cloudbackup'), 'paper', 12, 8, .07));
         after(3, () => { tag(anchorOf('cloudbackup'), 'Backup verified', 2.6); bump('backups'); });
       } else {
-        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('missed'); });
+        after(1, () => { tag(anchorOf('backup'), "Backup didn't run", 3.4, true); bump('gaps'); });
       }
     },
     patch() {
@@ -1211,7 +1316,14 @@ function createApp(L) {
     for (const o of objects.values()) setAlert(o, 0);
     if (staff) { staff.def.at.forEach((_, i) => setInst(staff, i, homeOf(i))); staffShow(true); }
     live.bob = live.walk = null; live.downAt = null;
+    setTeamVisible(true);
     threat = null; threatGroup.visible = false; packets.length = 0;
+  }
+  /* Without CMIT there is no team: hide the team buildings and every flow that touches them. */
+  function setTeamVisible(on) {
+    for (const id of TEAM_IDS) { const o = OBJ(id); if (o) o.group.visible = on; }
+    for (const l of links) if (l.team) l.mesh.visible = on;
+    live.noTeam = !on;
   }
   function liveStart(mode = 'protected') {
     clearWorld();
@@ -1219,6 +1331,7 @@ function createApp(L) {
     if (live.compWas == null) live.compWas = state.comp;
     if (state.comp !== live.compWas) toggleComp(live.compWas);
     staffShow(false);
+    setTeamVisible(mode !== 'exposed');
     recap.hidden = true; hud.hidden = false; appEl.classList.add('live-on'); appEl.classList.remove('recap-on');
     $('#hud-mode').textContent = mode === 'exposed' ? 'Without CMIT' : 'With CMIT';
     hud.classList.toggle('exposed', mode === 'exposed');
@@ -1280,6 +1393,10 @@ function createApp(L) {
       if (t.life <= 0) { scene.remove(t.o); live.tags.splice(i, 1); }
       else if (t.life < .4) t.el.style.opacity = t.life / .4;
     }
+    for (const m of live.cages) if (m.userData.snap > 0) {
+      m.userData.snap = Math.max(0, m.userData.snap - dt * 3.2);
+      m.scale.setScalar(1 + m.userData.snap * 1.5);
+    }
     for (const r of rings) {
       if (!r.on) continue;
       r.t += dt; if (r.t < 0) continue;
@@ -1315,7 +1432,8 @@ function createApp(L) {
     const closeT = (18 * 60 - DAY0 + 1440) % 1440;
     if (exposed() && live.downAt != null && !live.offCounted && live.t >= closeT) { live.offCounted = true; bump('offline', Math.round((closeT - live.downAt) / 6) / 10); }
     while (live.busy <= 0 && live.i < EVENTS.length && live.t >= EVENTS[live.i].m) {
-      const e = EVENTS[live.i++];
+      let e = EVENTS[live.i++];
+      if (exposed() && e.exposedAs) e = { ...e, ...e.exposedAs };
       live.active = e; live.busy = e.dur || 4.5;
       toast(lines(e));
       if (HANDLERS[e.type]) HANDLERS[e.type](e);
@@ -1403,7 +1521,7 @@ function createApp(L) {
       if (o.badge) { const bv = state.comp && !show; if (o.badge.visible !== bv) o.badge.visible = bv; }
     }
     const zs = !state.zone && !state.sel && !(live.running && live.labelZone);
-    for (const Z of zones.values()) if (Z.label.visible !== zs) Z.label.visible = zs;
+    for (const Z of zones.values()) { const v = zs && !(live.noTeam && Z.def.group === 'team'); if (Z.label.visible !== v) Z.label.visible = v; }
     labelR.domElement.classList.toggle('comp', state.comp);
   }
 

@@ -44,7 +44,7 @@ const MAP = {
 
   /* Who-handles-it chips. `unit` is the CMIT Team object the chip lights up. */
   handlers: {
-    soc:    { label: "SOC",     unit: "soc" },
+    soc:    { label: "Security", unit: "soc" },
     remote: { label: "Remote",  unit: "remote" },
     onsite: { label: "On-site", unit: "truck" }
   },
@@ -85,7 +85,7 @@ const MAP = {
           tag: "Next-gen firewall, threat filtering, patching",
           model: "device", size: [1.0, 0.18, 0.25], at: [[-10.6, 2.0, -6.25]],
           summary: "Your firewall decides what is allowed in and out of the office network. We run it as a next-generation firewall (NGFW) that inspects traffic for threats and blocks known-bad sites. Firmware patches happen on a schedule, not whenever someone remembers.",
-          bullets: ["Next-generation firewall setup and rule management", "Threat, malware, and web filtering", "Firmware patching on a managed schedule", "Secure VPN (virtual private network) access for remote staff", "Logs reviewed 24/7 by the CMIT SOC"] },
+          bullets: ["Next-generation firewall setup and rule management", "Threat, malware, and web filtering", "Firmware patching on a managed schedule", "Secure VPN (virtual private network) access for remote staff", "Logs reviewed 24/7 by your CMIT team"] },
 
         { id: "switch", lead: 18, name: "Core switch + patch panel", link: "NET", handlers: ["remote", "onsite"],
           tag: "VLANs, port security, cable documentation",
@@ -99,21 +99,21 @@ const MAP = {
           summary: "The rack is the physical home of your most important equipment. We plan the layout, keep airflow and cooling in check, and label everything. The result is a closet that is safe to work in and easy to hand off.",
           bullets: ["Rack layout and cable management", "Cooling and temperature monitoring", "Clear labeling and as-built documentation", "Physical access recommendations"] },
 
-        { id: "server", name: "On-prem server", link: "MS", handlers: ["soc", "remote", "onsite"], regulated: true,
+        { id: "server", control: "Encrypted · logged", gap: "No audit log", name: "On-prem server", link: "MS", handlers: ["soc", "remote", "onsite"], regulated: true,
           tag: "24/7 monitoring, patching, lifecycle",
           model: "device", size: [1.0, 0.5, 0.3], at: [[-10.6, 0.95, -6.25]],
           summary: "If your business runs files, apps, or databases in the office, they live here. We monitor the server 24/7, patch it on a schedule, and plan its replacement before it becomes an emergency.",
           bullets: ["24/7 health and performance monitoring", "Scheduled operating system and application patching", "EDR (endpoint detection and response) protection", "Warranty and lifecycle tracking", "Migration planning when the cloud makes more sense"],
           compliance: "Servers that hold patient, client, or financial records fall under HIPAA (the Health Insurance Portability and Accountability Act), the FTC Safeguards Rule, or both. We put access controls, encryption, and audit logging in place and keep the documentation." },
 
-        { id: "nas", lead: 96, name: "NAS / file storage", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
+        { id: "nas", control: "Access by role", gap: "Open to everyone", lead: 96, name: "NAS / file storage", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
           tag: "Permissions, encryption, capacity alerts",
           model: "device", size: [0.32, 0.42, 0.42], at: [[-6.95, 0.8, -7.15]],
           summary: "A NAS (network-attached storage) is the shared drive everyone saves to. We set who can see what, encrypt the data, and alert you long before it fills up.",
           bullets: ["Folder permissions by role", "Encryption at rest", "Capacity and drive-health alerts", "Included in backup and restore testing"],
           compliance: "Shared drives are where sensitive files quietly pile up. Role-based permissions and encryption support HIPAA and FTC Safeguards Rule requirements for protecting stored records." },
 
-        { id: "backup", lead: 56, name: "Backup appliance", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
+        { id: "backup", control: "Restores tested", gap: "Never tested", lead: 56, name: "Backup appliance", link: "BKP", handlers: ["remote", "soc", "onsite"], regulated: true,
           tag: "Local and offsite copies, tested restores",
           model: "device", size: [0.6, 0.22, 0.45], at: [[-7.9, 0.8, -7.15]],
           summary: "Backups only matter if they restore. This appliance keeps fast local copies of your servers and shared drives and sends a copy offsite. We test restores, so recovery is a plan, not a hope.",
@@ -136,12 +136,12 @@ const MAP = {
       bounds: [-6, -8, 12, 0],
       objects: [
         { id: "workstations", labelIndex: 0, name: "Desktop workstations", link: "MS", handlers: ["soc", "remote", "onsite"],
-          tag: "EDR + 24/7 SOC response",
+          tag: "EDR + 24/7 team response",
           model: "workstation", at: [[-3.6, 0, -6.2], [-0.4, 0, -6.2], [2.8, 0, -6.2], [-3.6, 0, -2.8], [2.8, 0, -2.8], [6.0, 0, -2.8]],
           summary: "Every desk computer gets the same protection and care, whether you have five or fifty. We run EDR (endpoint detection and response), keep Windows and your apps patched, and fix problems remotely, often before anyone notices.",
-          bullets: ["EDR protection watched by the CMIT SOC", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
+          bullets: ["EDR protection watched 24/7 by your CMIT team", "Automated operating system and third-party patching", "Remote support in one click", "Hardware health and lifecycle tracking", "Standard setup for every new hire"] },
 
-        { id: "laptops", labelIndex: 0, name: "Laptops (in office + remote)", link: "SEC", handlers: ["soc", "remote", "onsite"], regulated: true,
+        { id: "laptops", control: "Encrypted · MFA", gap: "Unencrypted", labelIndex: 0, name: "Laptops (in office + remote)", link: "SEC", handlers: ["soc", "remote", "onsite"], regulated: true,
           tag: "Encryption, MFA, secure remote access",
           model: "laptop", at: [[6.0, 0, -6.2], [-0.4, 0, -2.8]],
           summary: "Laptops leave the building, so they carry more risk. We encrypt the drive, require MFA (multi-factor authentication), and give staff secure remote access. A lost bag becomes an inconvenience, not a breach.",
@@ -274,7 +274,7 @@ const MAP = {
           summary: "The stuff nobody tracks. Smart thermostats, speakers, and plugs all join your Wi-Fi, and any one of them can be a way in. We find them, inventory them, and fence them off from your business data.",
           bullets: ["Discovery and inventory of connected devices", "Isolation on a dedicated IoT (Internet of Things) network", "Default password and firmware checks"] },
 
-        { id: "pos", name: "POS / payment terminal", link: "CMP", handlers: ["remote", "onsite", "soc"], regulated: true,
+        { id: "pos", control: "PCI segmented", gap: "On the open network", name: "POS / payment terminal", link: "CMP", handlers: ["remote", "onsite", "soc"], regulated: true,
           tag: "PCI-aware segmentation",
           model: "pos", at: [[5.6, 1.05, 3.1, 180]],
           summary: "If you take cards, your POS (point of sale) terminal handles your most sensitive data. We segment it from everything else to keep it inside a smaller, cleaner scope for PCI DSS (Payment Card Industry Data Security Standard).",
@@ -289,11 +289,11 @@ const MAP = {
       name: "Cloud",
       blurb: "The services your business runs on, wherever your team works.",
       objects: [
-        { id: "email", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
+        { id: "email", control: "Encrypted mail", gap: "No encryption", name: "Business email", link: "SEC", handlers: ["soc", "remote"], regulated: true, icon: "mail",
           tag: "Phishing filtering, impersonation defense",
           model: "tile", at: [[-9.2, 9.68, -23.1]],
           summary: "Email is where most attacks start. We filter spam and phishing before it reaches the inbox, block impersonation of you and your vendors, and turn on protections that Microsoft 365 leaves off by default.",
-          bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by the CMIT SOC"],
+          bullets: ["Spam, malware, and phishing filtering", "Impersonation and spoofing defense", "Link and attachment scanning", "Mailbox monitoring by your CMIT team"],
           compliance: "Email is a common place for patient and customer data to leak. Message encryption and data loss prevention rules support HIPAA and FTC Safeguards Rule obligations." },
 
         { id: "identity", name: "Identity & MFA", link: "SEC", handlers: ["soc", "remote"], icon: "lock",
@@ -302,7 +302,7 @@ const MAP = {
           summary: "Your login is the new front door. We set up single sign-on (one login for every app), conditional access that checks where and how people sign in, and MFA (multi-factor authentication) everywhere.",
           bullets: ["Single sign-on across your apps", "Conditional access by device and location", "MFA for every user", "Same-day onboarding and offboarding"] },
 
-        { id: "files", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
+        { id: "files", control: "Retention set", gap: "Shared by link", name: "Files & sharing (OneDrive / SharePoint)", link: "CLD", handlers: ["soc", "remote"], regulated: true, icon: "folder",
           tag: "Permissions, retention, ransomware rollback",
           model: "tile", at: [[-0.8, 9.68, -23.1]],
           summary: "Your files live in Microsoft 365 now, which makes sharing easy, sometimes too easy. We set permissions, retention, and version history, so one bad click or a ransomware event can be rolled back.",
@@ -321,14 +321,14 @@ const MAP = {
           summary: "Your domain is the root of your email and your website. We lock it against hijacking, keep SSL certificates valid, and set up SPF, DKIM, and DMARC (email authentication records) so nobody can send email pretending to be you.",
           bullets: ["Domain registrar lock and renewal tracking", "SSL certificate monitoring", "SPF, DKIM, and DMARC setup", "DNS (domain name system) management"] },
 
-        { id: "lob", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
+        { id: "lob", control: "Access reviewed", gap: "Ex-staff still in", name: "Line-of-business apps (EHR, accounting, CRM)", link: "APP", handlers: ["remote"], regulated: true, icon: "apps",
           tag: "Vendor coordination, access reviews",
           model: "tile", at: [[-0.8, 9.68, -20.0]],
           summary: "This is the software that runs your business: an EHR (electronic health record), accounting, or CRM (customer relationship management) system. We coordinate with the vendor, handle updates, and review who has access.",
           bullets: ["Vendor coordination and escalation", "Updates and integration support", "Regular access reviews", "Onboarding and offboarding in every app"],
           compliance: "These apps hold your most regulated data. Access reviews and audit logs support HIPAA, the FTC Safeguards Rule, and your client contract requirements." },
 
-        { id: "cloudbackup", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
+        { id: "cloudbackup", control: "Immutable copy", gap: "No offsite copy", name: "Cloud backup (M365 + servers)", link: "BKP", handlers: ["soc", "remote"], regulated: true, icon: "upload",
           tag: "Offsite immutable copies",
           model: "tile", at: [[-9.2, 9.68, -16.9]],
           summary: "Microsoft keeps 365 running, but recovering your deleted or encrypted data is your job. We back up email, OneDrive, SharePoint, and Teams, plus your servers, to immutable offsite storage that can't be altered or deleted.",
@@ -356,10 +356,10 @@ const MAP = {
       blurb: "The people behind the coverage: watching, fixing, and showing up.",
       labelAt: [21, 4.6, -0.6],
       objects: [
-        { id: "soc", name: "Security Operations Center", link: "MDR", handlers: ["soc"], hotkey: "6",
+        { id: "soc", name: "24/7 Security Team", link: "MDR", handlers: ["soc"], hotkey: "6",
           tag: "24/7 threat detection and response",
           model: "soc", at: [[21, 0.12, -5.5]],
-          summary: "Our SOC (security operations center) watches your environment 24/7/365. It is the MDR (managed detection and response) team that triages every alert, shuts down real threats, and tells you what happened in plain English.",
+          summary: "Your CMIT security team watches your environment 24/7/365 with MDR (managed detection and response). They triage every alert, shut down real threats, and tell you what happened in plain English.",
           bullets: ["24/7 threat detection and response", "Alert triage, so you are never drowning in noise", "Endpoint, email, and identity monitoring", "Incident reports written for owners"] },
 
         { id: "remote", name: "Remote Support", link: "SUP", handlers: ["remote"], hotkey: "7",
@@ -430,14 +430,15 @@ const MAP = {
         text: "Help desk ticket fixed remotely in minutes.",
         exposed: "Help desk ticket opened. Still waiting on IT." },
       { at: "11:45", type: "edr", target: "laptops", device: 0, ask: "Fake PDF tool running", dur: 5.5,
-        text: "A fake PDF tool starts running. EDR stops it and the SOC isolates the laptop.",
+        text: "A fake PDF tool starts running. EDR traps it and your CMIT team isolates the laptop.",
         exposed: "Antivirus logged an alert. Nobody read it. The attacker stays for months." },
 
-      { at: "13:00", type: "section", zone: "conference", dur: 6,
+      { at: "12:50", type: "section", zone: "conference", dur: 3,
         items: ["av", "tv", "aps", "guestwifi"],
-        tag: { on: "guestwifi", text: "Guest network only", exposed: "Same network as your files" },
-        text: "Conference & Common Area. A guest's laptop gets internet, never your files.",
-        exposed: "Conference & Common Area. Guests share the network with your files and printers." },
+        text: "Conference & Common Area. Meetings, Wi-Fi and the screens your guests see." },
+      { at: "13:30", type: "guest", dur: 6,
+        text: "A guest's laptop gets the internet, never your files.",
+        exposed: "A guest's laptop joins the same network as your files and printers." },
 
       { at: "14:30", type: "section", zone: "building", dur: 3.5,
         items: ["cameras", "badge", "intercom", "alarm", "iot", "pos"],
@@ -449,18 +450,16 @@ const MAP = {
       { at: "18:30", type: "section", zone: "cloud", dur: 3.5,
         items: ["email", "identity", "files", "teams", "lob", "cloudbackup", "ai"],
         text: "Cloud. The services your business runs on, wherever your team works." },
-      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", dur: 5,
+      { at: "20:00", type: "threat", target: "identity", origin: 2, spread: "files", hit: "Files opened", mfa: true, dur: 6,
         text: "Sign-in from overseas stopped by MFA and conditional access.",
         exposed: "Sign-in from overseas succeeded. Shared files opened." },
-      { at: "21:00", type: "section", zone: "cloud", dur: 4,
-        items: ["ai", "lob"],
-        tag: { on: "ai", text: "Data put to work", exposed: "Data scattered" },
+      { at: "21:00", type: "ai", dur: 6,
         text: "Your own data, connected and put to work, with guardrails.",
         exposed: "Data spread across apps nobody connected." },
 
-      { at: "23:00", type: "section", zone: "team", dur: 3.5,
-        items: ["soc", "remote", "truck"],
-        text: "CMIT Team. The people behind it: watching, fixing, showing up." },
+      { at: "23:00", type: "team", dur: 5.5,
+        text: "Your CMIT team. Watching every device overnight, fixing and showing up.",
+        exposedAs: { type: "section", zone: null, items: [], dur: 3, text: "Overnight. Nobody is watching." } },
       { at: "02:00", type: "patch", dur: 4.5,
         text: "Updates installed on {n} devices while you slept.",
         exposed: "{n} devices still unpatched." },
@@ -468,23 +467,23 @@ const MAP = {
         text: "Nightly backup completed and verified.",
         exposed: "Backup didn't run. Nobody noticed." },
 
-      { at: "06:00", type: "section", dur: 6, items: "regulated", compliance: true,
-        text: "Every action left a record for your insurer, auditor or buyer.",
-        exposed: "No records. Nothing to show an insurer, auditor or buyer." }
+      { at: "05:30", type: "comply", dur: 7.5,
+        text: "We help your business stay compliant. HIPAA, FTC Safeguards and PCI DSS controls, kept in place every day.",
+        exposed: "Nobody is checking. Compliance gaps pile up until an audit or a breach finds them." }
     ],
     recap: {
       protected: {
         preheader: "Simulated day with CMIT",
         title: "Here's what your technology team handled today",
         body: "Your staff worked the whole day without noticing any of it. That's the point.",
-        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["access", "Access removed"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
+        stats: [["blocked", "Threats blocked"], ["isolated", "Endpoints isolated"], ["fixed", "Problems fixed"], ["controls", "Compliance controls in place"], ["updates", "Updates installed"], ["backups", "Backups verified"]],
         alt: "See the same day without CMIT"
       },
       exposed: {
         preheader: "Simulated day without CMIT",
         title: "The same day without a technology team",
         body: "Same office, same day, same threats. This time nobody was watching.",
-        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["open", "Former employee accounts left open"], ["unpatched", "Devices left unpatched"], ["missed", "Backups that didn't run"]],
+        stats: [["breaches", "Attacks that got in"], ["offline", "Business hours offline"], ["compromised", "Infected devices nobody caught"], ["gaps", "Compliance gaps"], ["unpatched", "Devices left unpatched"], ["open", "Former employee accounts left open"]],
         alt: "Replay the day with CMIT"
       }
     }
@@ -497,11 +496,11 @@ const MAP = {
 
   /* Threat toasts, rotated in order. Target is "firewall" or "email". */
   threats: [
-    { target: "email",    text: "Phishing email blocked by the CMIT SOC." },
+    { target: "email",    text: "Phishing email blocked by your CMIT team." },
     { target: "firewall", text: "Ransomware download stopped at the firewall. Nobody had to unplug anything." },
     { target: "email",    text: "Credential-stuffing attempt locked out. Those passwords were never going to work." },
     { target: "email",    text: "Spoofed invoice quarantined. Accounts payable never saw it." },
-    { target: "firewall", text: "Sign-in from overseas blocked and flagged by the CMIT SOC." }
+    { target: "firewall", text: "Sign-in from overseas blocked and flagged by your CMIT team." }
   ],
 
   /* Static furniture and building shell (ghosted x-ray glass). */
